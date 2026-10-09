@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Gross-up Renda Fixa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: painel de entradas fixo à esquerda, resultados empilhados à direita; uma coluna no celular. */
+:root{
+  --bg:#f5f8f8; --surface:#ffffff; --surface-2:#eaf1f1; --line:#d6e2e2;
+  --fg:#12292b; --fg-2:#4b6466; --fg-3:#7d9395;
+  --teal:#009b97; --teal-ink:#007874; --teal-soft:#d8efee;
+  --orange:#d9701a; --orange-soft:#fbe8d8;
+  --band:#eef4f4; --band-2:#f7fafa;
+  --warn:#b4540a;
+  --f-ui:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:14px;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 48px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 24px;margin-bottom:22px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-3);font-weight:700}
+h1{font-size:30px;line-height:1.1;margin:4px 0 0;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+h1 span{color:var(--teal-ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--fg-2);font:600 12.5px var(--f-ui);padding:7px 13px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tab:disabled{cursor:default;opacity:.55}
+.tab small{font-weight:500;margin-left:4px;opacity:.8}
+
+.grid{display:grid;grid-template-columns:minmax(290px,370px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:20px}
+.field{display:flex;flex-direction:column;gap:8px}
+.lbl{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-2);display:flex;justify-content:space-between;gap:8px}
+.lbl em{font-style:normal;font-weight:500;text-transform:none;letter-spacing:0;color:var(--fg-3)}
+.sep{height:1px;background:var(--line);margin:0 -20px}
+
+/* pill toggles */
+.pills{display:flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px}
+.pills button{flex:1 1 0;border:0;background:transparent;color:var(--fg-2);font:600 12.5px var(--f-ui);padding:8px 6px;border-radius:999px;cursor:pointer;white-space:nowrap;min-width:0}
+.pills button[aria-pressed="true"]{background:var(--teal);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.pills.dir button{white-space:normal;line-height:1.25;padding:8px 10px}
+.pills button:focus-visible,.tab:focus-visible,.chip:focus-visible,.btn:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+/* inputs */
+.inrow{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid transparent;border-radius:10px;padding:0 12px}
+.inrow:focus-within{border-color:var(--teal)}
+.inrow input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:500 18px var(--f-num);padding:9px 0;outline:none}
+.inrow .unit{color:var(--fg-3);font:500 12.5px var(--f-ui);white-space:nowrap}
+.inrow.sm input{font-size:15px;padding:7px 0}
+input[type="date"]{font-family:var(--f-num)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two .field{min-width:0}
+
+/* slider */
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;margin:0;cursor:pointer}
+input[type="range"]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(to right,var(--teal) var(--p,50%),var(--line) var(--p,50%))}
+input[type="range"]::-moz-range-track{height:4px;border-radius:4px;background:linear-gradient(to right,var(--teal) var(--p,50%),var(--line) var(--p,50%))}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--surface);border:2px solid var(--teal);margin-top:-6px}
+input[type="range"]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--surface);border:2px solid var(--teal)}
+input[type="range"]:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px}
+.rng-scale{display:flex;justify-content:space-between;font:11px var(--f-num);color:var(--fg-3);margin-top:-4px}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--fg-2);font:600 12px var(--f-ui);padding:4px 11px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--orange);color:var(--orange);background:var(--orange-soft)}
+
+/* results */
+.results{display:flex;flex-direction:column;gap:20px;min-width:0}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;display:flex;flex-direction:column;gap:18px}
+.eq{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;align-items:center}
+.side .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--fg-3)}
+.side .prod{font-size:12.5px;color:var(--fg-2);margin-top:2px}
+.side .val{font:600 30px/1.15 var(--f-num);margin-top:6px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.side.out .val{color:var(--teal-ink);font-size:38px}
+.side .val small{font:500 14px var(--f-ui);color:var(--fg-2);letter-spacing:0;margin:0 5px}
+.side.out .tag{color:var(--teal-ink)}
+.arrow{font:600 22px var(--f-ui);color:var(--orange)}
+@media (max-width:560px){.eq{grid-template-columns:minmax(0,1fr)}.arrow{transform:rotate(90deg);justify-self:start}}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;padding-top:16px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--fg-2)}
+.meta b{font:600 13px var(--f-num);color:var(--fg);margin-left:4px}
+.irpill{display:inline-flex;align-items:center;gap:6px;background:var(--orange-soft);color:var(--orange);font-weight:700;border-radius:999px;padding:2px 10px;font-size:12px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:1px solid var(--teal);background:transparent;color:var(--teal-ink);font:700 12.5px var(--f-ui);padding:8px 14px;border-radius:999px;cursor:pointer}
+.btn:hover{background:var(--teal-soft)}
+.copied{font-size:12px;color:var(--fg-3)}
+.warnbox{color:var(--warn);font-size:13px;font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0}
+.card h2{font-size:15px;margin:0 0 4px;font-weight:800;letter-spacing:-.01em}
+.card .sub{font-size:12.5px;color:var(--fg-3);margin:0 0 14px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);font-weight:700;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+td.num{font-size:13px}
+tr.sel td{color:var(--teal-ink);font-weight:600}
+tr.total td{font-weight:700;border-bottom:0}
+td.neg{color:var(--orange)}
+
+.chart-box{position:relative}
+.chart-box svg{display:block;width:100%;height:auto;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--fg-2);margin-bottom:8px}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid var(--teal);vertical-align:middle;margin-right:6px}
+.legend i.dash{border-top:2px dashed var(--orange)}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12px;padding:8px 10px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-100%);display:none;z-index:2;line-height:1.45}
+.tip b{font-family:var(--f-num);font-weight:600}
+.ax{font:11px var(--f-num);fill:var(--fg-3)}
+.axl{font:600 10.5px var(--f-ui);fill:var(--fg-3);letter-spacing:.04em}
+
+.notes{font-size:12.5px;color:var(--fg-2);max-width:78ch}
+.notes p{margin:0 0 8px}
+.notes code{font-family:var(--f-num);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.ticket{display:grid;grid-template-columns:1.15fr 1.2fr 1fr 1fr;background:var(--surface-2);border-radius:12px;overflow:hidden}
+.tk{padding:12px 16px;min-width:0;border-left:1px solid var(--line)}
+.tk:first-child{border-left:0}
+.tk-k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--fg-3)}
+.tk-v{font-weight:700;font-size:16px;margin-top:3px;color:var(--fg);overflow-wrap:anywhere;line-height:1.25}
+.tk-v.num{font-family:var(--f-num);font-weight:600;font-size:16px;white-space:nowrap;overflow-wrap:normal}
+.tk-v small{font:500 12px var(--f-ui);color:var(--fg-2);margin-left:4px}
+.tk-s{font-size:11.5px;color:var(--fg-2);margin-top:2px}
+.tk.prod .tk-s{display:inline-block;font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:1px 8px;border-radius:999px;margin-top:5px}
+.tk.prod .tk-s.trib{background:var(--orange-soft);color:var(--orange)}
+.tk.prod .tk-s.isento{background:var(--teal-soft);color:var(--teal-ink)}
+@media (max-width:720px){.tk{padding:10px 12px}.tk-v.num{font-size:14.5px}.ticket{grid-template-columns:1fr 1fr}.tk:nth-child(3){border-left:0}.tk:nth-child(n+3){border-top:1px solid var(--line)}}
+.herorow{display:flex;flex-wrap:wrap;gap:16px 40px;align-items:flex-end}
+.hcol{min-width:0}
+.hcol.rate{padding-left:28px;border-left:1px solid var(--line)}
+.hcol.rate .hero-big{color:var(--fg)}
+.hero-big small{font:500 15px var(--f-ui);color:var(--fg-2);margin-left:5px;letter-spacing:0}
+@media (max-width:560px){.hcol.rate{padding-left:0;border-left:0}}
+.hero-big{font:600 clamp(26px,7.4vw,40px)/1.1 var(--f-num);white-space:nowrap;letter-spacing:-.02em;color:var(--teal-ink);overflow-wrap:anywhere}
+.hero-sub{font-size:13.5px;color:var(--fg-2)}
+.hero-sub b{font-family:var(--f-num);color:var(--fg);font-weight:600}
+.btn.solid{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.solid:hover{background:var(--teal-ink);border-color:var(--teal-ink)}
+.btn.ghost{border-color:var(--line);color:var(--fg-2)}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.danger{border-color:var(--orange);color:var(--orange)}
+.card-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px 16px}
+.card-head .actions{gap:8px}
+.note{font-size:12px;color:var(--fg-3);margin:12px 0 0}
+.hist td,.hist th{font-size:12.5px;padding-inline:6px}
+#sDemo td:first-child{white-space:normal}
+#sDemo td.num{white-space:normal;overflow-wrap:anywhere}
+.hist td:last-child,.hist th:last-child{padding-right:0;width:28px}
+.x{border:0;background:transparent;color:var(--fg-3);cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:6px}
+.x:hover{color:var(--orange);background:var(--orange-soft)}
+.best{display:inline-block;margin-left:6px;font:700 10px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--teal-ink);background:var(--teal-soft);padding:1px 7px;border-radius:999px;vertical-align:1px}
+.empty{color:var(--fg-3);font-size:13px;padding:14px 0 4px}
+tr.sub td{color:var(--fg-2)}
+.pills.dir button small{font-weight:500;opacity:.8;font-size:11.5px}
+.notice{display:flex;gap:10px;align-items:flex-start;background:var(--orange-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.45}
+[hidden]{display:none!important}
+.notice::before{content:"!";flex:none;width:18px;height:18px;border-radius:50%;background:var(--orange);color:#fff;font:800 12px/18px var(--f-ui);text-align:center;margin-top:1px}
+.notice b{font-weight:700}
+.eqgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.eqgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.eqt{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.eqt .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--fg-3)}
+.eqt .v{font:600 clamp(17px,2.2vw,22px)/1.2 var(--f-num);color:var(--teal-ink);overflow-wrap:anywhere}
+.eqt .v small{font:500 12px var(--f-ui);color:var(--fg-2);margin:0 4px}
+.eqt .s{font-size:11.5px;color:var(--fg-3)}
+.eqt.inp{background:var(--surface-2);border-color:transparent}
+.eqt.inp .v{color:var(--fg)}
+.sens td.inp,.sens th.inp{color:var(--fg-3)}
+.sens tr.cur td{background:var(--teal-soft);color:var(--teal-ink);font-weight:600}
+.sens tr.cur td:first-child{border-radius:8px 0 0 8px;padding-left:8px}
+.sens tr.cur td:last-child{border-radius:0 8px 8px 0}
+.sens td:first-child,.sens th:first-child{padding-left:8px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:12px;font-size:12px;color:var(--fg-2)}
+.toolbar .pills{min-width:0}
+.toolbar .pills button{flex:0 0 auto;padding:6px 12px;font-size:12px}
+@media (prefers-reduced-motion:no-preference){.pills button,.chip,.tab{transition:background .15s,color .15s}}
+
+/* ===== Terminal financeiro (claro) ===== */
+.brand span{font:600 11px var(--f-num);letter-spacing:.12em;text-transform:uppercase;color:var(--fg)}
+.status{gap:0;align-items:stretch}
+.ind{display:flex;align-items:baseline;gap:6px;padding:0 12px;border-left:1px solid var(--line);white-space:nowrap}
+.ind:first-child{border-left:0;padding-left:0}
+.ind i{font-style:normal;color:var(--fg-3);font-size:10.5px;letter-spacing:.06em}
+.ind b{font-size:12.5px;color:var(--fg)}
+.ind em{font-style:normal;font-size:10px;color:var(--fg-3)}
+.ind.focus i{color:var(--teal-ink)}
+.ind.man i{color:var(--orange)}
+.ind.man button{border:1px solid var(--orange);background:transparent;color:var(--orange);font:600 10px var(--f-num);text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:2px;cursor:pointer}
+.ind.dt{color:var(--fg-3)}
+@media (max-width:900px){.status{row-gap:4px}.ind{padding:0 10px 0 0;border-left:0}}
+
+.kpis{display:grid;grid-template-columns:1.15fr 1.2fr 1fr 1fr;margin:0 -12px;border-bottom:1px solid var(--line)}
+.kpi{padding:10px 12px;border-left:1px solid var(--line);min-width:0;display:grid;grid-template-rows:auto auto auto;align-content:start;gap:3px}
+.kpi:first-child{border-left:0}
+.kpi.main{grid-column:span 2}
+.kpi-k{font:600 10px var(--f-num);letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3)}
+.kpi-v{font:600 26px/1.15 var(--f-num);letter-spacing:-.02em;color:var(--fg);white-space:nowrap;font-variant-numeric:tabular-nums}
+.kpi.main .kpi-v{color:var(--teal-ink)}
+.kpi-v small{font:500 12px var(--f-num);color:var(--fg-3);margin-left:4px;letter-spacing:0;text-transform:uppercase}
+.kpi-s{font:11.5px var(--f-num);color:var(--fg-2)}
+.kpi-s b{color:var(--fg);font-weight:600}
+@media (max-width:720px){.kpis{grid-template-columns:1fr 1fr}.kpi.main{grid-column:1/-1;border-bottom:1px solid var(--line)}.kpi:nth-child(2){border-left:0}.kpi-v{font-size:22px}}
+
+:root{
+  --bg:#ffffff; --surface:#ffffff; --surface-2:#f1f5f5; --line:#d8e0e0; --zebra:#f8fafa;
+  --fg:#0b1d1f; --fg-2:#435759; --fg-3:#7a8a8b;
+  --teal:#009b97; --teal-ink:#006f6b; --teal-soft:#dff1f0; --orange:#d9701a; --orange-soft:#fdf0e4;
+  --f-ui:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --r:3px; color-scheme:light;
+}
+body{font-size:13px;background:var(--bg)}
+.wrap{max-width:1360px;padding-inline:16px;padding-block:8px 32px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+header.top{margin:0;padding:6px 0;border-bottom:2px solid var(--fg);align-items:center;gap:6px 20px}
+.brand{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-family:var(--f-num)}
+.brand b{font-size:14px;font-weight:600;letter-spacing:.04em}
+.brand b i{font-style:normal;color:var(--orange)}
+.brand span{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--fg-3)}
+.status{display:flex;flex-wrap:wrap;gap:2px 16px;font:11.5px var(--f-num);color:var(--fg-3);text-transform:uppercase}
+.status b{color:var(--fg);font-weight:600}
+.status .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);margin-right:6px;vertical-align:1px}
+.tabs{gap:0;border-bottom:1px solid var(--line);margin:0 0 10px;flex-wrap:wrap}
+.tab{border:0;border-radius:0;background:transparent;color:var(--fg-2);font:600 11.5px var(--f-num);text-transform:uppercase;letter-spacing:.06em;padding:8px 14px 7px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab kbd{font:inherit;color:var(--fg-3);margin-right:6px;font-weight:500}
+.tab[aria-selected="true"]{background:transparent;color:var(--teal-ink);border-color:transparent;border-bottom-color:var(--teal)}
+.tab:hover{color:var(--fg)}
+.grid{grid-template-columns:minmax(260px,310px) minmax(0,1fr);gap:10px}
+.panel,.card,.hero{border-radius:var(--r);border:1px solid var(--line);box-shadow:none}
+.panel{padding:0 12px 12px;gap:11px}
+.hero{padding:0 12px 10px;gap:10px}
+.card{padding:0 12px 10px}
+.ph,.card>h2,.card-head{margin:0 -12px;padding:6px 12px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.ph,.card>h2,.card-head h2{font:600 10.5px var(--f-num);letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2)}
+.card>h2{margin-bottom:8px}
+.card-head{margin-bottom:8px;align-items:center}
+.card-head h2{margin:0}
+.card-head .sub{margin:1px 0 0;font-size:11px}
+.card .sub{font-size:11.5px;margin:0 0 6px;color:var(--fg-3)}
+.ph{display:flex;justify-content:space-between;gap:8px}
+.ph em{font-style:normal;color:var(--fg-3);font-weight:500}
+.sep{margin:0 -12px}
+.field{gap:5px}
+.lbl{font:600 10px var(--f-num);letter-spacing:.08em;color:var(--fg-2)}
+.lbl em{font:400 10.5px var(--f-ui);letter-spacing:0}
+.pills{border-radius:2px;padding:2px;gap:2px}
+.pills button{border-radius:2px;font:600 11px var(--f-num);text-transform:uppercase;letter-spacing:.04em;padding:6px 4px}
+.pills.dir button{padding:5px 8px}
+.pills.dir button small{font:500 10.5px var(--f-ui);text-transform:none;letter-spacing:0}
+.pills button[aria-pressed="true"]{box-shadow:none}
+.inrow{border-radius:2px;background:var(--surface);border:1px solid var(--line);padding:0 8px}
+.inrow input{font-size:15px;padding:5px 0}
+.inrow.sm input{font-size:13px;padding:4px 0}
+.inrow .unit{font:500 10.5px var(--f-num);text-transform:uppercase}
+.chips{gap:4px}
+.chip{border-radius:2px;font:600 10.5px var(--f-num);padding:3px 8px;text-transform:uppercase}
+.rng-scale{font-size:10px}
+.btn{border-radius:2px;font:600 11px var(--f-num);text-transform:uppercase;letter-spacing:.05em;padding:6px 11px}
+.actions{gap:6px}
+.copied{font:11px var(--f-num)}
+.results{gap:10px}
+table{font-size:12.5px}
+th{font:600 10px var(--f-num);letter-spacing:.08em;padding:5px 8px}
+td{padding:5px 8px}
+tbody tr:nth-child(even) td{background:var(--zebra)}
+td.num{font-size:12.5px}
+tr.total td{background:var(--surface-2)!important;border-top:1px solid var(--fg-3)}
+.ticket{border-radius:0;margin:0 -12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.tk{padding:8px 12px}
+.tk-k,.side .tag{font:600 10px var(--f-num);letter-spacing:.1em}
+.tk-v,.tk-v.num{font-size:14px}
+.tk-s{font-size:11px}
+.tk.prod .tk-s{border-radius:2px;font-family:var(--f-num);font-size:10px}
+.herorow{gap:8px 28px}
+.hero-big{font-size:clamp(24px,5vw,30px)}
+.hero-big small{font-size:13px}
+.hcol.rate{padding-left:22px}
+.hero-sub{font-size:12px}
+.meta{padding-top:8px;gap:4px 18px;font:11.5px var(--f-num);text-transform:uppercase;color:var(--fg-3)}
+.meta b{font-size:12px}
+.irpill{border-radius:2px;font-family:var(--f-num);padding:0 6px;font-size:11px}
+.notice{border-radius:0;padding:6px 10px;font-size:11.5px;border-left:3px solid var(--orange);background:var(--orange-soft)}
+.notice::before{display:none}
+.eq{gap:10px}
+.side .val{font-size:24px}
+.side.out .val{font-size:30px}
+.side .prod{font-size:11.5px}
+.eqgrid{gap:6px}
+.eqt{border-radius:2px;padding:8px 10px}
+.eqt .v{font-size:18px}
+.notes{font-size:12px}
+.notes p{margin-bottom:6px}
+.legend{font-size:11px}
+.best{border-radius:2px;font-family:var(--f-num)}
+.toolbar{margin-bottom:8px}
+.hist th{font-size:10px}
+.card.notes{max-width:none}
+.notes p{max-width:110ch}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){.hcol.rate{padding-left:0;border-left:0}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span>Simulador bancário · Renda fixa</span></div>
+    <div class="status" id="status" aria-label="Indicadores">
+      <span class="ind"><i>CDI</i><b id="iCdi">—</b><em id="iCdiD"></em></span>
+      <span class="ind"><i>IPCA 12M</i><b id="iIpca">—</b><em id="iIpcaD"></em></span>
+      <span class="ind focus"><i id="iSelicL">Selic Focus</i><b id="iSelic">—</b></span>
+      <span class="ind focus"><i>IPCA Focus 12M</i><b id="iIpcaF">—</b><em id="iFocusD"></em></span>
+      <span class="ind man" id="iMan" hidden><i>Projeção manual</i><button type="button" id="iReset">usar oficiais</button></span>
+      <span class="ind dt" id="stDate">—</span>
+    </div>
+  </header>
+  <h1 id="h1" class="sr">Simulador de aplicação</h1>
+  <nav class="tabs" role="tablist" aria-label="Módulos">
+    <button class="tab" role="tab" aria-selected="true" data-tab="sim"><kbd>1</kbd>Simulador</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="gross"><kbd>2</kbd>Gross-up</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="eq"><kbd>3</kbd>Equivalência</button>
+  </nav>
+
+  <div class="module" id="m-gross" hidden>
+  <div class="grid">
+    <!-- ENTRADAS -->
+    <section class="panel" aria-label="Parâmetros">
+      <div class="ph">Parâmetros<em>gross-up</em></div>
+      <div class="field">
+        <div class="lbl">Direção</div>
+        <div class="pills dir" id="dir">
+          <button type="button" data-v="up" aria-pressed="true">Isento → Tributável</button>
+          <button type="button" data-v="down" aria-pressed="false">Tributável → Isento</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="lbl">Indexador</div>
+        <div class="pills" id="idx">
+          <button type="button" data-v="pre" aria-pressed="false">Pré</button>
+          <button type="button" data-v="pct" aria-pressed="true">%CDI</button>
+          <button type="button" data-v="cdip" aria-pressed="false">CDI+</button>
+          <button type="button" data-v="ipca" aria-pressed="false">IPCA+</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="rate"><span id="rateLbl">Taxa do ativo isento</span><em id="rateHint">LCI · LCA</em></label>
+        <div class="inrow"><input id="rate" inputmode="decimal" autocomplete="off"><span class="unit" id="rateUnit">% do CDI</span></div>
+        <input type="range" id="rateR" aria-label="Ajuste da taxa">
+        <div class="rng-scale"><span id="rMin"></span><span id="rMax"></span></div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="two">
+        <div class="field">
+          <label class="lbl" for="dtIni">Aplicação</label>
+          <div class="inrow sm"><input type="date" id="dtIni"></div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="dtFim">Vencimento</label>
+          <div class="inrow sm"><input type="date" id="dtFim"></div>
+        </div>
+      </div>
+      <div class="chips" id="prazos" aria-label="Prazos rápidos">
+        <button type="button" class="chip" data-m="6">6 m</button>
+        <button type="button" class="chip" data-m="12">1 ano</button>
+        <button type="button" class="chip" data-m="24">2 anos</button>
+        <button type="button" class="chip" data-m="36">3 anos</button>
+        <button type="button" class="chip" data-m="60">5 anos</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="two">
+        <div class="field">
+          <label class="lbl" for="cdi">CDI proj.</label>
+          <div class="inrow sm"><input id="cdi" inputmode="decimal"><span class="unit">% a.a.</span></div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="ipca">IPCA proj.</label>
+          <div class="inrow sm"><input id="ipca" inputmode="decimal"><span class="unit">% a.a.</span></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="valor">Valor aplicado</label>
+        <div class="inrow sm"><span class="unit">R$</span><input id="valor" inputmode="numeric"></div>
+      </div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section class="results" aria-live="polite">
+      <div class="hero">
+        <div class="ph">Resultado<em>isento × tributável</em></div>
+        <div class="eq">
+          <div class="side in">
+            <div class="tag" id="inTag">Isento</div>
+            <div class="prod" id="inProd">LCI · LCA</div>
+            <div class="val num" id="inVal">—</div>
+          </div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="side out">
+            <div class="tag" id="outTag">Equivale a tributável</div>
+            <div class="prod" id="outProd">CDB · LC · LF</div>
+            <div class="val num" id="outVal">—</div>
+          </div>
+        </div>
+        <div class="warnbox" id="warn" hidden></div>
+        <div class="notice" id="gNote" hidden></div>
+        <div class="meta">
+          <span>Dias úteis<b id="mDU">—</b></span>
+          <span>Dias corridos<b id="mDC">—</b></span>
+          <span>Alíquota IR <span class="irpill" id="mIR">—</span></span>
+          <span>Aprox. linear<b id="mLin">—</b></span>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="copy">Copiar resumo</button>
+          <span class="copied" id="copied" hidden>Resumo copiado</span>
+        </div>
+      </div>
+
+      <div class="cols">
+        <div class="card">
+          <h2>Equivalência por indexador</h2>
+          <p class="sub" id="eqSub">Mesma rentabilidade líquida, expressa em cada indexador.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Indexador</th><th>Isento</th><th>Tributável</th></tr></thead>
+              <tbody id="eqBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Resultado no vencimento</h2>
+          <p class="sub" id="resSub">Projeção para o valor aplicado.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th></th><th>Isento</th><th>Tributável</th></tr></thead>
+              <tbody id="resBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Taxa equivalente por prazo</h2>
+        <p class="sub" id="chSub">Como a taxa equivalente muda com o vencimento, mantendo a taxa de entrada.</p>
+        <div class="legend">
+          <span><i></i>Gross-up composto (dias úteis)</span>
+          <span><i class="dash"></i>Aproximação linear (taxa ÷ (1 − IR))</span>
+        </div>
+        <div class="chart-box" id="chartBox">
+          <svg id="chart" role="img" aria-label="Taxa equivalente por prazo"></svg>
+          <div class="tip" id="tip"></div>
+        </div>
+      </div>
+
+      <div class="card notes">
+        <h2>Como o cálculo é feito</h2>
+        <p>O rendimento líquido do período é <code>(1 + taxa)^(DU/252) − 1</code>. No gross-up ele é dividido por <code>(1 − IR)</code> e reanualizado em base 252. Na direção contrária, o rendimento bruto é multiplicado por <code>(1 − IR)</code>.</p>
+        <p>Os dias úteis contam da aplicação até a véspera do vencimento, com o calendário de feriados nacionais da planilha (2020–2078) mais 20 de novembro a partir de 2024. A alíquota de IR segue a tabela regressiva pelos dias corridos: até 180 dias 22,5%, até 360 dias 20%, até 720 dias 17,5% e acima disso 15%.</p>
+        <p>%CDI usa a convenção de mercado: fator diário <code>1 + %CDI × ((1 + CDI)^(1/252) − 1)</code>. CDI+ e IPCA+ compõem a taxa: <code>(1 + índice) × (1 + spread) − 1</code>.</p>
+      </div>
+    </section>
+  </div>
+  </div>
+  <div class="module" id="m-sim">
+  <div class="grid">
+    <section class="panel" aria-label="Dados da aplicação">
+      <div class="ph">Parâmetros<em>aplicação</em></div>
+      <div class="field">
+        <div class="lbl">Tipo de aplicação</div>
+        <div class="pills dir" id="sTipo">
+          <button type="button" data-v="trib" aria-pressed="true">Tributada<br><small>CDB · LC · LF</small></button>
+          <button type="button" data-v="isento" aria-pressed="false">Isenta<br><small>LCI · LCA</small></button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="lbl">Indexador</div>
+        <div class="pills" id="sIdx">
+          <button type="button" data-v="pre" aria-pressed="true">Pré</button>
+          <button type="button" data-v="pct" aria-pressed="false">%CDI</button>
+          <button type="button" data-v="cdip" aria-pressed="false">CDI+</button>
+          <button type="button" data-v="ipca" aria-pressed="false">IPCA+</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="sRate">Taxa contratada</label>
+        <div class="inrow"><input id="sRate" inputmode="decimal" autocomplete="off"><span class="unit" id="sRateUnit">% a.a.</span></div>
+        <input type="range" id="sRateR" aria-label="Ajuste da taxa contratada">
+        <div class="rng-scale"><span id="sMin"></span><span id="sMax"></span></div>
+      </div>
+      <div class="sep"></div>
+      <div class="two">
+        <div class="field"><label class="lbl" for="sIni">Emissão</label><div class="inrow sm"><input type="date" id="sIni"></div></div>
+        <div class="field"><label class="lbl" for="sFim">Resgate</label><div class="inrow sm"><input type="date" id="sFim"></div></div>
+      </div>
+      <div class="chips" id="sPrazos" aria-label="Prazos rápidos">
+        <button type="button" class="chip" data-m="6">6 m</button>
+        <button type="button" class="chip" data-m="12">1 ano</button>
+        <button type="button" class="chip" data-m="24">2 anos</button>
+        <button type="button" class="chip" data-m="36">3 anos</button>
+        <button type="button" class="chip" data-m="60">5 anos</button>
+      </div>
+      <div class="sep"></div>
+      <div class="two">
+        <div class="field"><label class="lbl" for="sCdi">CDI proj.</label><div class="inrow sm"><input id="sCdi" inputmode="decimal"><span class="unit">% a.a.</span></div></div>
+        <div class="field"><label class="lbl" for="sIpca">IPCA proj.</label><div class="inrow sm"><input id="sIpca" inputmode="decimal"><span class="unit">% a.a.</span></div></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="sValor">Valor da aplicação</label>
+        <div class="inrow sm"><span class="unit">R$</span><input id="sValor" inputmode="numeric"></div>
+      </div>
+    </section>
+
+    <section class="results" aria-live="polite">
+      <div class="hero">
+        <div class="ph">Resultado<em>projeção no resgate</em></div>
+        <div class="ticket" aria-label="Dados da aplicação">
+          <div class="tk prod"><div class="tk-k">Produto</div><div class="tk-v" id="tkProd">—</div><div class="tk-s" id="tkProdS">—</div></div>
+          <div class="tk"><div class="tk-k">Taxa contratada</div><div class="tk-v num" id="tkRate">—</div><div class="tk-s" id="tkRateS">—</div></div>
+          <div class="tk"><div class="tk-k">Valor aplicado</div><div class="tk-v num" id="tkVal">—</div><div class="tk-s" id="tkValS">&nbsp;</div></div>
+          <div class="tk"><div class="tk-k">Prazo</div><div class="tk-v" id="tkPrazo">—</div><div class="tk-s num" id="tkPrazoS">—</div></div>
+        </div>
+        <div class="kpis">
+          <div class="kpi main">
+            <div class="kpi-k">Valor líquido no resgate</div>
+            <div class="kpi-v" id="sTotal">—</div>
+            <div class="kpi-s" id="sHeroSub">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-k">Rentab. líquida no período</div>
+            <div class="kpi-v" id="sPer">—</div>
+            <div class="kpi-s" id="sPerS">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-k">Taxa líquida</div>
+            <div class="kpi-v" id="sAM">—</div>
+            <div class="kpi-s"><b id="sAA">—</b> a.a. · base 252</div>
+          </div>
+        </div>
+        <div class="warnbox" id="sWarn" hidden></div>
+        <div class="notice" id="sNote" hidden></div>
+        <div class="meta">
+          <span hidden>Dias úteis<b id="sDU">—</b></span>
+          <span hidden>Dias corridos<b id="sDC">—</b></span>
+          <span>Alíquota IR <span class="irpill" id="sIR">—</span></span>
+          <span>Equivale a<b id="sLiqCDI">—</b></span>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn solid" id="sAdd">Adicionar ao histórico</button>
+          <button type="button" class="btn" id="sToGross">Ver gross-up</button>
+          <button type="button" class="btn ghost" id="sCopy">Copiar resumo</button>
+          <span class="copied" id="sCopied" hidden></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Demonstrativo</h2>
+        <p class="sub" id="sDemoSub">—</p>
+        <div class="tbl-wrap"><table><tbody id="sDemo"></tbody></table></div>
+      </div>
+
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Histórico de simulações</h2>
+            <p class="sub">Compare alternativas para o cliente. Fica salvo neste navegador.</p>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn ghost" id="hCopy">Copiar tabela</button>
+            <button type="button" class="btn ghost" id="hClear">Limpar</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="hist">
+            <thead><tr><th>Tipo</th><th>Taxa contratada</th><th>Vencimento</th><th>IR</th><th>Rendimento líq.</th><th>Líq. a.m.</th><th>Líq. a.a.</th><th>Valor total</th><th></th></tr></thead>
+            <tbody id="hBody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="hEmpty">Nenhuma simulação ainda. Use “Adicionar ao histórico” para guardar a atual.</div>
+        <span class="copied" id="hCopied" hidden></span>
+      </div>
+    </section>
+  </div>
+  </div>
+  <div class="module" id="m-eq" hidden>
+  <div class="grid">
+    <section class="panel" aria-label="Taxa de entrada">
+      <div class="ph">Parâmetros<em>taxa informada</em></div>
+      <div class="field">
+        <div class="lbl">Indexador da taxa informada</div>
+        <div class="pills" id="eIdx">
+          <button type="button" data-v="pre" aria-pressed="false">Pré</button>
+          <button type="button" data-v="pct" aria-pressed="false">%CDI</button>
+          <button type="button" data-v="cdip" aria-pressed="true">CDI+</button>
+          <button type="button" data-v="ipca" aria-pressed="false">IPCA+</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="eRate">Taxa</label>
+        <div class="inrow"><input id="eRate" inputmode="decimal" autocomplete="off"><span class="unit" id="eRateUnit">% a.a.</span></div>
+        <input type="range" id="eRateR" aria-label="Ajuste da taxa">
+        <div class="rng-scale"><span id="eMin"></span><span id="eMax"></span></div>
+      </div>
+      <div class="sep"></div>
+      <div class="two">
+        <div class="field"><label class="lbl" for="eCdi">CDI proj.</label><div class="inrow sm"><input id="eCdi" inputmode="decimal"><span class="unit">% a.a.</span></div></div>
+        <div class="field"><label class="lbl" for="eIpca">IPCA proj.</label><div class="inrow sm"><input id="eIpca" inputmode="decimal"><span class="unit">% a.a.</span></div></div>
+      </div>
+      <div class="field">
+        <div class="lbl">Cálculo do %CDI</div>
+        <div class="pills dir" id="eConv">
+          <button type="button" data-v="daily" aria-pressed="true">Diário<br><small>convenção de mercado</small></button>
+          <button type="button" data-v="simple" aria-pressed="false">Anual simples<br><small>taxa ÷ CDI, como na planilha</small></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="results" aria-live="polite">
+      <div class="hero">
+        <div class="ph">Resultado<em>mesma tributação</em></div>
+        <div>
+          <div class="side"><div class="tag">Taxas equivalentes</div></div>
+          <div class="hero-sub">Mesma rentabilidade anual, mesma tributação, expressa em cada indexador.</div>
+        </div>
+        <div class="eqgrid" id="eTiles"></div>
+        <div class="notice" id="eNote"></div>
+        <div class="actions">
+          <button type="button" class="btn ghost" id="eCopy">Copiar resumo</button>
+          <span class="copied" id="eCopied" hidden></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Sensibilidade ao CDI</h2>
+            <p class="sub" id="eSensSub">—</p>
+          </div>
+          <div class="actions"><button type="button" class="btn ghost" id="eCopyT">Copiar tabela</button></div>
+        </div>
+        <div class="toolbar">
+          <span>Intervalo entre cenários</span>
+          <div class="pills" id="eStep">
+            <button type="button" data-v="0.25" aria-pressed="false">0,25 p.p.</button>
+            <button type="button" data-v="0.5" aria-pressed="false">0,50 p.p.</button>
+            <button type="button" data-v="1" aria-pressed="true">1,00 p.p.</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="sens">
+            <thead><tr id="eHead"></tr></thead>
+            <tbody id="eBody"></tbody>
+          </table>
+        </div>
+        <span class="copied" id="eCopiedT" hidden></span>
+      </div>
+
+      <div class="card notes">
+        <h2>Como a equivalência é calculada</h2>
+        <p>Toda taxa é levada para uma taxa efetiva ao ano (base 252) e depois reescrita em cada indexador. CDI+ e IPCA+ compõem a taxa: <code>(1 + índice) × (1 + spread) − 1</code>.</p>
+        <p>No cálculo diário, %CDI é a razão entre os fatores diários: <code>((1 + taxa)^(1/252) − 1) ÷ ((1 + CDI)^(1/252) − 1)</code>. No anual simples, é <code>taxa ÷ CDI</code>, como na tabela da planilha. O diário dá um %CDI menor para spreads positivos.</p>
+      </div>
+    </section>
+  </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- calendário ---------- */
+const HOL = new Set("20200101,20200224,20200225,20200410,20200421,20200501,20200611,20200907,20201012,20201102,20201115,20201225,20210101,20210215,20210216,20210402,20210421,20210501,20210603,20210907,20211012,20211102,20211115,20211225,20220101,20220228,20220301,20220415,20220421,20220501,20220616,20220907,20221012,20221102,20221115,20221225,20230101,20230220,20230221,20230407,20230421,20230501,20230608,20230907,20231012,20231102,20231115,20231225,20240101,20240212,20240213,20240329,20240421,20240501,20240530,20240907,20241012,20241102,20241115,20241225,20250101,20250303,20250304,20250418,20250421,20250501,20250619,20250907,20251012,20251102,20251115,20251225,20260101,20260216,20260217,20260403,20260421,20260501,20260604,20260907,20261012,20261102,20261115,20261225,20270101,20270208,20270209,20270326,20270421,20270501,20270527,20270907,20271012,20271102,20271115,20271225,20280101,20280228,20280229,20280414,20280421,20280501,20280615,20280907,20281012,20281102,20281115,20281225,20290101,20290212,20290213,20290330,20290421,20290501,20290531,20290907,20291012,20291102,20291115,20291225,20300101,20300304,20300305,20300419,20300421,20300501,20300620,20300907,20301012,20301102,20301115,20301225,20310101,20310224,20310225,20310411,20310421,20310501,20310612,20310907,20311012,20311102,20311115,20311225,20320101,20320209,20320210,20320326,20320421,20320501,20320527,20320907,20321012,20321102,20321115,20321225,20330101,20330228,20330301,20330415,20330421,20330501,20330616,20330907,20331012,20331102,20331115,20331225,20340101,20340220,20340221,20340407,20340421,20340501,20340608,20340907,20341012,20341102,20341115,20341225,20350101,20350205,20350206,20350323,20350421,20350501,20350524,20350907,20351012,20351102,20351115,20351225,20360101,20360225,20360226,20360411,20360421,20360501,20360612,20360907,20361012,20361102,20361115,20361225,20370101,20370216,20370217,20370403,20370421,20370501,20370604,20370907,20371012,20371102,20371115,20371225,20380101,20380308,20380309,20380421,20380423,20380501,20380624,20380907,20381012,20381102,20381115,20381225,20390101,20390221,20390222,20390408,20390421,20390501,20390609,20390907,20391012,20391102,20391115,20391225,20400101,20400213,20400214,20400330,20400421,20400501,20400531,20400907,20401012,20401102,20401115,20401225,20410101,20410304,20410305,20410419,20410421,20410501,20410620,20410907,20411012,20411102,20411115,20411225,20420101,20420217,20420218,20420404,20420421,20420501,20420605,20420907,20421012,20421102,20421115,20421225,20430101,20430209,20430210,20430327,20430421,20430501,20430528,20430907,20431012,20431102,20431115,20431225,20440101,20440229,20440301,20440415,20440421,20440501,20440616,20440907,20441012,20441102,20441115,20441225,20450101,20450220,20450221,20450407,20450421,20450501,20450608,20450907,20451012,20451102,20451115,20451225,20460101,20460205,20460206,20460323,20460421,20460501,20460524,20460907,20461012,20461102,20461115,20461225,20470101,20470225,20470226,20470412,20470421,20470501,20470613,20470907,20471012,20471102,20471115,20471225,20480101,20480217,20480218,20480403,20480421,20480501,20480604,20480907,20481012,20481102,20481115,20481225,20490101,20490301,20490302,20490416,20490421,20490501,20490617,20490907,20491012,20491102,20491115,20491225,20500101,20500221,20500222,20500408,20500421,20500501,20500609,20500907,20501012,20501102,20501115,20501225,20510101,20510213,20510214,20510331,20510421,20510501,20510601,20510907,20511012,20511102,20511115,20511225,20520101,20520304,20520305,20520419,20520421,20520501,20520620,20520907,20521012,20521102,20521115,20521225,20530101,20530217,20530218,20530404,20530421,20530501,20530605,20530907,20531012,20531102,20531115,20531225,20540101,20540209,20540210,20540327,20540421,20540501,20540528,20540907,20541012,20541102,20541115,20541225,20550101,20550301,20550302,20550416,20550421,20550501,20550617,20550907,20551012,20551102,20551115,20551225,20560101,20560214,20560215,20560331,20560421,20560501,20560601,20560907,20561012,20561102,20561115,20561225,20570101,20570305,20570306,20570420,20570421,20570501,20570621,20570907,20571012,20571102,20571115,20571225,20580101,20580225,20580226,20580412,20580421,20580501,20580613,20580907,20581012,20581102,20581115,20581225,20590101,20590210,20590211,20590328,20590421,20590501,20590529,20590907,20591012,20591102,20591115,20591225,20600101,20600301,20600302,20600416,20600421,20600501,20600617,20600907,20601012,20601102,20601115,20601225,20610101,20610221,20610222,20610408,20610421,20610501,20610609,20610907,20611012,20611102,20611115,20611225,20620101,20620206,20620207,20620324,20620421,20620501,20620525,20620907,20621012,20621102,20621115,20621225,20630101,20630226,20630227,20630413,20630421,20630501,20630614,20630907,20631012,20631102,20631115,20631225,20640101,20640218,20640219,20640404,20640421,20640501,20640605,20640907,20641012,20641102,20641115,20641225,20650101,20650209,20650210,20650327,20650421,20650501,20650528,20650907,20651012,20651102,20651115,20651225,20660101,20660222,20660223,20660409,20660421,20660501,20660610,20660907,20661012,20661102,20661115,20661225,20670101,20670214,20670215,20670401,20670421,20670501,20670602,20670907,20671012,20671102,20671115,20671225,20680101,20680305,20680306,20680420,20680421,20680501,20680621,20680907,20681012,20681102,20681115,20681225,20690101,20690225,20690226,20690412,20690421,20690501,20690613,20690907,20691012,20691102,20691115,20691225,20700101,20700210,20700211,20700328,20700421,20700501,20700529,20700907,20701012,20701102,20701115,20701225,20710101,20710302,20710303,20710417,20710421,20710501,20710618,20710907,20711012,20711102,20711115,20711225,20720101,20720222,20720223,20720408,20720421,20720501,20720609,20720907,20721012,20721102,20721115,20721225,20730101,20730206,20730207,20730324,20730421,20730501,20730525,20730907,20731012,20731102,20731115,20731225,20740101,20740226,20740227,20740413,20740421,20740501,20740614,20740907,20741012,20741102,20741115,20741225,20750101,20750218,20750219,20750405,20750421,20750501,20750606,20750907,20751012,20751102,20751115,20751225,20760101,20760302,20760303,20760417,20760421,20760501,20760618,20760907,20761012,20761102,20761115,20761225,20770101,20770222,20770223,20770409,20770421,20770501,20770610,20770907,20771012,20771102,20771115,20771225,20780101,20780214,20780215,20780401,20780421,20780501,20780602,20780907,20781012,20781102,20781115,20781225".split(",").map(Number));
+for(let y=2024;y<=2078;y++) HOL.add(y*10000+1120); // Consciência Negra (Lei 14.759/2023)
+const DAY=86400000;
+const ymd = t => { const d=new Date(t); return d.getUTCFullYear()*10000+(d.getUTCMonth()+1)*100+d.getUTCDate(); };
+const isBiz = t => { const w=new Date(t).getUTCDay(); return w!==0 && w!==6 && !HOL.has(ymd(t)); };
+const parseISO = s => { if(!s) return NaN; const [y,m,d]=s.split("-").map(Number); return Date.UTC(y,m-1,d); };
+const toISO = t => new Date(t).toISOString().slice(0,10);
+const fmtDate = t => { const d=new Date(t); return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear(); };
+function addMonths(t,m){ const d=new Date(t); const y=d.getUTCFullYear(), mo=d.getUTCMonth()+m, day=d.getUTCDate();
+  const last=new Date(Date.UTC(y,mo+1,0)).getUTCDate(); return Date.UTC(y,mo,Math.min(day,last)); }
+/* cum[i] = dias úteis em [ini, ini+i) */
+function cumBiz(ini, n){ const c=new Int32Array(n+1); for(let i=0;i<n;i++) c[i+1]=c[i]+(isBiz(ini+i*DAY)?1:0); return c; }
+
+/* ---------- finanças ---------- */
+const irRate = dc => dc<=180?0.225:dc<=360?0.20:dc<=720?0.175:0.15;
+// taxa no indexador -> taxa efetiva a.a. (base 252)
+function toAnnual(idx, x, cdi, ipca){
+  switch(idx){
+    case "pre": return x;
+    case "pct": { const d=Math.pow(1+cdi,1/252)-1; return Math.pow(1+x*d,252)-1; }
+    case "cdip": return (1+cdi)*(1+x)-1;
+    case "ipca": return (1+ipca)*(1+x)-1;
+  }
+}
+function fromAnnual(idx, r, cdi, ipca){
+  switch(idx){
+    case "pre": return r;
+    case "pct": { const d=Math.pow(1+cdi,1/252)-1; return (Math.pow(1+r,1/252)-1)/d; }
+    case "cdip": return (1+r)/(1+cdi)-1;
+    case "ipca": return (1+r)/(1+ipca)-1;
+  }
+}
+// converte taxa efetiva a.a. de um lado para o outro (dir: up = isento->tributável)
+function convert(dir, r, du, ir){
+  const g = Math.pow(1+r, du/252)-1;
+  const g2 = dir==="up" ? g/(1-ir) : g*(1-ir);
+  return { r2: Math.pow(1+g2, 252/du)-1, gPer:g, g2Per:g2 };
+}
+const linear = (dir,r,ir) => dir==="up" ? r/(1-ir) : r*(1-ir);
+
+/* ---------- formatação ---------- */
+const nf = (v,d=2) => v.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const brl = v => v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const IDX = {
+  pre:  {name:"Prefixado", short:"Pré",  unit:"% a.a.",  min:5,  max:20,  step:0.05, def:12},
+  pct:  {name:"% do CDI",  short:"%CDI", unit:"% do CDI",min:70, max:150, step:0.5,  def:95},
+  cdip: {name:"CDI +",     short:"CDI+", unit:"% a.a.",  min:-1, max:6,   step:0.05, def:0.5},
+  ipca: {name:"IPCA +",    short:"IPCA+",unit:"% a.a.",  min:2,  max:10,  step:0.05, def:6},
+};
+function fmtRate(idx, x, html){ // x em decimal
+  const v=nf(x*100);
+  const s = (t,u)=> html? `${t}<small>${u}</small>` : `${t} ${u}`;
+  switch(idx){
+    case "pre": return s(v+"%","a.a.");
+    case "pct": return s(v+"%","do CDI");
+    case "cdip": case "ipca": {
+      const base = idx==="cdip"?"CDI":"IPCA", sg = x<0?"−":"+", a=nf(Math.abs(x)*100);
+      return html? `<small>${base} ${sg}</small>${a}%` : `${base} ${sg} ${a}%`; }
+  }
+}
+const parseNum = s => { s=String(s).trim().replace(/\s|%|R\$/g,""); if(s.includes(",")) s=s.replace(/\./g,"").replace(",","."); const v=parseFloat(s); return isFinite(v)?v:NaN; };
+
+/* ---------- estado ---------- */
+const $ = id => document.getElementById(id);
+const today = (()=>{ const n=new Date(); return Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()); })();
+let S = { dir:"up", idx:"pct", rate:{pre:12,pct:95,cdip:0.5,ipca:6}, ini:toISO(today), fim:toISO(addMonths(today,24)), cdi:14.90, ipca:4.50, valor:100000 };
+try{ const saved=JSON.parse(localStorage.getItem("grossup.v1")||"null"); if(saved&&saved.rate) S=Object.assign(S,saved,{rate:Object.assign(S.rate,saved.rate)}); }catch(e){}
+const save = () => { try{ localStorage.setItem("grossup.v1",JSON.stringify(S)); }catch(e){} };
+
+/* ---------- UI bindings ---------- */
+function setPressed(groupId, v, attr="v"){ document.querySelectorAll(`#${groupId} button`).forEach(b=>b.setAttribute("aria-pressed", String(b.dataset[attr]===String(v)))); }
+function syncRateUI(){
+  const m=IDX[S.idx], r=$("rateR");
+  r.min=m.min; r.max=m.max; r.step=m.step;
+  r.value=Math.min(m.max,Math.max(m.min,S.rate[S.idx]));
+  r.style.setProperty("--p", ((r.value-m.min)/(m.max-m.min)*100)+"%");
+  $("rMin").textContent=nf(m.min, m.min%1?2:0); $("rMax").textContent=nf(m.max, m.max%1?2:0);
+  $("rateUnit").textContent = S.idx==="cdip"?"% a.a. sobre CDI": S.idx==="ipca"?"% a.a. sobre IPCA": m.unit;
+  if(document.activeElement!==$("rate")) $("rate").value=nf(S.rate[S.idx]);
+  const isUp=S.dir==="up";
+  $("rateLbl").textContent = isUp?"Taxa do ativo isento":"Taxa do ativo tributável";
+  $("rateHint").textContent = isUp?"LCI · LCA · Deb. incentivada":"CDB · LC · LF";
+}
+function syncAll(){
+  setPressed("dir",S.dir); setPressed("idx",S.idx); syncRateUI();
+  $("dtIni").value=S.ini; $("dtFim").value=S.fim;
+  if(document.activeElement!==$("cdi")) $("cdi").value=nf(S.cdi);
+  if(document.activeElement!==$("ipca")) $("ipca").value=nf(S.ipca);
+  if(document.activeElement!==$("valor")) $("valor").value=S.valor.toLocaleString("pt-BR");
+  const months = Math.round((parseISO(S.fim)-parseISO(S.ini))/DAY/30.4375);
+  document.querySelectorAll("#prazos .chip").forEach(c=>{
+    c.setAttribute("aria-pressed", String(toISO(addMonths(parseISO(S.ini),+c.dataset.m))===S.fim)); });
+  render(); save(); simRender(); eqRender();
+  renderStatus();
+}
+document.querySelectorAll("#dir button").forEach(b=>b.addEventListener("click",()=>{ S.dir=b.dataset.v; syncAll(); }));
+document.querySelectorAll("#idx button").forEach(b=>b.addEventListener("click",()=>{ S.idx=b.dataset.v; syncAll(); }));
+document.querySelectorAll("#prazos .chip").forEach(c=>c.addEventListener("click",()=>{ S.fim=toISO(addMonths(parseISO(S.ini),+c.dataset.m)); syncAll(); }));
+$("rateR").addEventListener("input",e=>{ S.rate[S.idx]=+e.target.value; $("rate").value=nf(S.rate[S.idx]); syncAll(); });
+$("rate").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)){ S.rate[S.idx]=v; syncAll(); } });
+$("rate").addEventListener("blur",()=>{ $("rate").value=nf(S.rate[S.idx]); });
+$("cdi").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)&&v>0){ S.cdi=v; S.manual=true; syncAll(); } });
+$("ipca").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)){ S.ipca=v; S.manual=true; syncAll(); } });
+["cdi","ipca"].forEach(k=>$(k).addEventListener("blur",()=>{ $(k).value=nf(S[k]); }));
+$("valor").addEventListener("input",e=>{ const v=parseInt(String(e.target.value).replace(/\D/g,""),10); S.valor=isFinite(v)?v:0; syncAll(); });
+$("valor").addEventListener("blur",()=>{ $("valor").value=S.valor.toLocaleString("pt-BR"); });
+$("dtIni").addEventListener("change",e=>{ if(e.target.value){ S.ini=e.target.value; syncAll(); } });
+$("dtFim").addEventListener("change",e=>{ if(e.target.value){ S.fim=e.target.value; syncAll(); } });
+
+/* ---------- cálculo + render ---------- */
+let last=null;
+function compute(){
+  const ini=parseISO(S.ini), fim=parseISO(S.fim);
+  const cdi=S.cdi/100, ipca=S.ipca/100;
+  const dc=Math.round((fim-ini)/DAY);
+  if(!(dc>0)) return {err:"O vencimento precisa ser posterior à data de aplicação."};
+  const c=cumBiz(ini,dc), du=c[dc];
+  if(du<1) return {err:"O período não tem nenhum dia útil."};
+  const ir=irRate(dc);
+  const xIn=S.rate[S.idx]/100;
+  const rIn=toAnnual(S.idx,xIn,cdi,ipca);
+  if(!(rIn>-1)) return {err:"Taxa inválida para o indexador escolhido."};
+  const {r2,gPer,g2Per}=convert(S.dir,rIn,du,ir);
+  const rLin=linear(S.dir,rIn,ir);
+  return {ini,fim,dc,du,ir,cdi,ipca,xIn,rIn,r2,gPer,g2Per,rLin};
+}
+function render(){
+  const R=compute(); last=R;
+  setNotice("gNote",S.idx,"A equivalência foi calculada");
+  const isUp=S.dir==="up";
+  $("inTag").textContent = isUp?"Isento":"Tributável";
+  $("inProd").textContent = isUp?"LCI · LCA · Deb. incentivada":"CDB · LC · LF";
+  $("outTag").textContent = isUp?"Equivale a tributável":"Equivale a isento";
+  $("outProd").textContent = isUp?"CDB · LC · LF":"LCI · LCA · Deb. incentivada";
+  if(R.err){ $("warn").hidden=false; $("warn").textContent=R.err; $("outVal").textContent="—";
+    ["mDU","mDC","mLin"].forEach(k=>$(k).textContent="—"); $("mIR").textContent="—";
+    $("eqBody").innerHTML=""; $("resBody").innerHTML=""; $("chart").innerHTML=""; return; }
+  $("warn").hidden=true;
+  const xOut=fromAnnual(S.idx,R.r2,R.cdi,R.ipca);
+  $("inVal").innerHTML=fmtRate(S.idx,R.xIn,true);
+  $("outVal").innerHTML=fmtRate(S.idx,xOut,true);
+  $("mDU").textContent=R.du.toLocaleString("pt-BR");
+  $("mDC").textContent=R.dc.toLocaleString("pt-BR");
+  $("mIR").textContent=nf(R.ir*100,1).replace(",0","")+"%";
+  $("mLin").textContent=fmtRate(S.idx,fromAnnual(S.idx,R.rLin,R.cdi,R.ipca),false);
+
+  // tabela de equivalência
+  const rIsento = isUp?R.rIn:R.r2, rTrib = isUp?R.r2:R.rIn;
+  $("eqBody").innerHTML = Object.keys(IDX).map(k=>`<tr class="${k===S.idx?"sel":""}"><td>${IDX[k].name}</td>
+    <td class="num">${fmtRate(k,fromAnnual(k,rIsento,R.cdi,R.ipca))}</td>
+    <td class="num">${fmtRate(k,fromAnnual(k,rTrib,R.cdi,R.ipca))}</td></tr>`).join("");
+  $("eqSub").textContent = `Mesma rentabilidade líquida, com CDI de ${nf(S.cdi)}% e IPCA de ${nf(S.ipca)}% a.a.`;
+
+  // resultado em R$
+  const V=S.valor, gI=Math.pow(1+rIsento,R.du/252)-1, gT=Math.pow(1+rTrib,R.du/252)-1;
+  const brutoT=V*gT, irT=brutoT*R.ir, liqT=brutoT-irT, liqI=V*gI;
+  const row=(l,a,b,cls="")=>`<tr class="${cls}"><td>${l}</td><td class="num">${a}</td><td class="num${cls==="irrow"?" neg":""}">${b}</td></tr>`;
+  $("resBody").innerHTML =
+    row("Rendimento bruto",brl(liqI),brl(brutoT)) +
+    row(`Imposto de renda (${nf(R.ir*100,1).replace(",0","")}%)`,"Isento","− "+brl(irT),"irrow") +
+    row("Rendimento líquido",brl(liqI),brl(liqT)) +
+    row("Rentab. líquida no período",nf(gI*100)+"%",nf((liqT/V||0)*100)+"%") +
+    row("Valor de resgate líquido",brl(V+liqI),brl(V+liqT),"total");
+  $("resSub").textContent = `Aplicação de ${brl(V)} de ${fmtDate(R.ini)} a ${fmtDate(R.fim)}.`;
+
+  drawChart(R);
+}
+
+/* ---------- gráfico ---------- */
+function niceTicks(lo,hi,n){ const span=hi-lo||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
+  const err=step0/mag, step=(err>=7.5?10:err>=3.5?5:err>=1.5?2:1)*mag;
+  const a=Math.floor(lo/step)*step, b=Math.ceil(hi/step)*step, t=[]; for(let v=a;v<=b+step/2;v+=step) t.push(+v.toFixed(10)); return t; }
+let pts=[];
+function drawChart(R){
+  const svg=$("chart"), box=$("chartBox");
+  const W=Math.max(300,box.clientWidth), H=Math.round(Math.min(300,Math.max(220,W*0.42)));
+  const P={l:52,r:14,t:26,b:34};
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const curM=Math.max(1,Math.round(R.dc/30.4375));
+  const maxM=Math.min(120,Math.max(60,Math.ceil(curM*1.25/12)*12));
+  const endT=addMonths(R.ini,maxM), nDays=Math.round((endT-R.ini)/DAY);
+  const c=cumBiz(R.ini,nDays);
+  pts=[];
+  for(let m=1;m<=maxM;m++){
+    const t=addMonths(R.ini,m), dc=Math.round((t-R.ini)/DAY), du=c[dc]; if(du<1) continue;
+    const ir=irRate(dc), {r2}=convert(S.dir,R.rIn,du,ir), rl=linear(S.dir,R.rIn,ir);
+    pts.push({m,dc,du,ir,t,y:fromAnnual(S.idx,r2,R.cdi,R.ipca)*100,yl:fromAnnual(S.idx,rl,R.cdi,R.ipca)*100});
+  }
+  const ys=pts.flatMap(p=>[p.y,p.yl]); let lo=Math.min(...ys), hi=Math.max(...ys);
+  const pad=(hi-lo)*0.12||0.5; const ticks=niceTicks(lo-pad,hi+pad,5); lo=ticks[0]; hi=ticks[ticks.length-1];
+  const X=m=>P.l+(m/maxM)*(W-P.l-P.r), Y=v=>P.t+(1-(v-lo)/(hi-lo))*(H-P.t-P.b);
+  let s="";
+  // faixas de IR
+  const bands=[[0,6,"22,5%"],[6,12,"20%"],[12,24,"17,5%"],[24,maxM,"15%"]];
+  bands.forEach(([a,b,l],i)=>{ if(a>=maxM) return; const x0=X(a), x1=X(Math.min(b,maxM));
+    s+=`<rect x="${x0}" y="${P.t}" width="${x1-x0}" height="${H-P.t-P.b}" fill="var(${i%2?"--band-2":"--band"})"/>`;
+    if(x1-x0>34) s+=`<text class="axl" x="${(x0+x1)/2}" y="${P.t-9}" text-anchor="middle">IR ${l}</text>`; });
+  // grid y
+  ticks.forEach(v=>{ s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+    s+=`<text class="ax" x="${P.l-8}" y="${Y(v)+4}" text-anchor="end">${nf(v,(ticks[1]-ticks[0])<1?1:0)}</text>`; });
+  // eixo x (anos)
+  const yrStep = maxM>84?24:12;
+  for(let m=0;m<=maxM;m+=yrStep){ s+=`<text class="ax" x="${X(m)}" y="${H-P.b+18}" text-anchor="middle">${m===0?"0":(m/12)+"a"}</text>`; }
+  s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${H-P.b}" y2="${H-P.b}" stroke="var(--fg-3)" stroke-width="1"/>`;
+  // linhas
+  const path=k=>pts.map((p,i)=>(i?"L":"M")+X(p.m).toFixed(1)+","+Y(p[k]).toFixed(1)).join("");
+  s+=`<path d="${path("yl")}" fill="none" stroke="var(--orange)" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round"/>`;
+  s+=`<path d="${path("y")}" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linejoin="round"/>`;
+  // marcador do vencimento atual
+  const curY=fromAnnual(S.idx,R.r2,R.cdi,R.ipca)*100, curX=P.l+(R.dc/30.4375/maxM)*(W-P.l-P.r);
+  if(curX<=W-P.r){
+    s+=`<line x1="${curX}" x2="${curX}" y1="${P.t}" y2="${H-P.b}" stroke="var(--fg-3)" stroke-dasharray="2 3"/>`;
+    s+=`<circle cx="${curX}" cy="${Y(curY)}" r="5" fill="var(--teal)" stroke="var(--surface)" stroke-width="2"/>`;
+  }
+  s+=`<g id="hov" style="display:none"><line id="hovL" y1="${P.t}" y2="${H-P.b}" stroke="var(--fg-2)" stroke-width="1"/>
+      <circle id="hovA" r="4" fill="var(--teal)" stroke="var(--surface)" stroke-width="2"/><circle id="hovB" r="4" fill="var(--orange)" stroke="var(--surface)" stroke-width="2"/></g>`;
+  s+=`<rect id="hit" x="${P.l}" y="${P.t}" width="${W-P.l-P.r}" height="${H-P.t-P.b}" fill="transparent"/>`;
+  svg.innerHTML=s;
+  const hit=svg.querySelector("#hit"), tip=$("tip"), g=svg.querySelector("#hov");
+  const move=ev=>{
+    const rect=svg.getBoundingClientRect(), sx=W/rect.width;
+    const px=(ev.clientX-rect.left)*sx; const m=Math.round((px-P.l)/(W-P.l-P.r)*maxM);
+    const p=pts.find(q=>q.m===Math.min(maxM,Math.max(1,m))); if(!p) return;
+    g.style.display=""; svg.querySelector("#hovL").setAttribute("x1",X(p.m)); svg.querySelector("#hovL").setAttribute("x2",X(p.m));
+    const a=svg.querySelector("#hovA"), b=svg.querySelector("#hovB");
+    a.setAttribute("cx",X(p.m)); a.setAttribute("cy",Y(p.y)); b.setAttribute("cx",X(p.m)); b.setAttribute("cy",Y(p.yl));
+    const prazo = p.m<12? p.m+(p.m===1?" mês":" meses") : (p.m%12? nf(p.m/12,1)+" anos": (p.m/12)+(p.m===12?" ano":" anos"));
+    tip.innerHTML=`${prazo} · venc. ${fmtDate(p.t)} · IR ${nf(p.ir*100,1).replace(",0","")}%<br>Composto <b>${fmtRate(S.idx,p.y/100)}</b><br>Linear <b>${fmtRate(S.idx,p.yl/100)}</b>`;
+    tip.style.display="block";
+    const bx=box.getBoundingClientRect(); let left=X(p.m)/sx; const tw=tip.offsetWidth;
+    left=Math.max(tw/2, Math.min(bx.width-tw/2, left));
+    tip.style.left=left+"px"; tip.style.top=(Math.min(Y(p.y),Y(p.yl))/sx-10)+"px";
+  };
+  hit.addEventListener("pointermove",move); hit.addEventListener("pointerdown",move);
+  hit.addEventListener("pointerleave",()=>{ g.style.display="none"; tip.style.display="none"; });
+  $("chSub").textContent=`Taxa ${S.dir==="up"?"tributável":"isenta"} equivalente a ${fmtRate(S.idx,R.xIn)}, aplicando hoje (${fmtDate(R.ini)}). O ponto marca o vencimento escolhido.`;
+}
+let rz, lastW=0; const redraw=()=>{ const w=$("chartBox").clientWidth; if(w!==lastW){ lastW=w; last&&!last.err&&drawChart(last);} };
+try{ new ResizeObserver(()=>{ clearTimeout(rz); rz=setTimeout(redraw,60); }).observe($("chartBox")); }catch(e){ window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(redraw,120); }); }
+
+/* ---------- copiar resumo ---------- */
+$("copy").addEventListener("click",()=>{
+  const R=last; if(!R||R.err) return;
+  const isUp=S.dir==="up", xOut=fromAnnual(S.idx,R.r2,R.cdi,R.ipca);
+  const a=(isUp?"Isento (LCI/LCA) ":"Tributável (CDB/LC/LF) ")+fmtRate(S.idx,R.xIn);
+  const b=(isUp?"tributável (CDB/LC/LF) ":"isento (LCI/LCA) ")+fmtRate(S.idx,xOut);
+  const txt=`${a} com vencimento em ${fmtDate(R.fim)} equivale a ${b}. Prazo de ${R.dc} dias corridos (${R.du} úteis), IR de ${nf(R.ir*100,1).replace(",0","")}%. Projeções: CDI ${nf(S.cdi)}% a.a., IPCA ${nf(S.ipca)}% a.a.`+(S.idx!=="pre"?" O resultado final pode ser diferente, pois a variação do indexador altera o rendimento.":"");
+  const done=()=>{ $("copied").hidden=false; $("copied").textContent="Resumo copiado"; setTimeout(()=>$("copied").hidden=true,2200); };
+  const fail=()=>{ $("copied").hidden=false; $("copied").textContent=txt; };
+  try{ navigator.clipboard.writeText(txt).then(done,fail); }catch(e){ fail(); }
+});
+
+/* =================== MÓDULO: SIMULADOR DE APLICAÇÃO =================== */
+const IOF = [96,93,90,86,83,80,76,73,70,66,63,60,56,53,50,46,43,40,36,33,30,26,23,20,16,13,10,6,3,0];
+const iofRate = dc => dc>=30||dc<1 ? 0 : IOF[dc-1]/100;
+let T = { tipo:"trib", idx:"pre", rate:{pre:14.65,pct:100,cdip:1,ipca:6.5}, ini:toISO(today), fim:toISO(addMonths(today,12)), valor:100000, hist:[] };
+try{ const sv=JSON.parse(localStorage.getItem("simulador.v1")||"null"); if(sv&&sv.rate) T=Object.assign(T,sv,{rate:Object.assign(T.rate,sv.rate)}); }catch(e){}
+const tSave = () => { try{ localStorage.setItem("simulador.v1",JSON.stringify(T)); }catch(e){} };
+const irLbl = ir => nf(ir*100,1).replace(",0","")+"%";
+
+function simCalc(V, tipo, idx, x, ini, fim, cdi, ipca){
+  const dc=Math.round((fim-ini)/DAY);
+  if(!(dc>0)) return {err:"A data de resgate precisa ser posterior à emissão."};
+  const c=cumBiz(ini,dc), du=c[dc];
+  if(du<1) return {err:"O período não tem nenhum dia útil."};
+  const r=toAnnual(idx,x,cdi,ipca);
+  if(!(r>-1)) return {err:"Taxa inválida para o indexador escolhido."};
+  const at = (dcp,dup) => {
+    const bruto=V*(Math.pow(1+r,dup/252)-1);
+    const iof = tipo==="trib" ? bruto*iofRate(dcp) : 0;
+    const ir = tipo==="trib" ? irRate(dcp) : 0;
+    const irv=(bruto-iof)*ir;
+    return {bruto,iof,ir,irv,liq:bruto-iof-irv};
+  };
+  const f=at(dc,du);
+  const gLiq=f.liq/V;
+  const aa252=Math.pow(1+gLiq,252/du)-1;
+  return Object.assign({dc,du,r,cum:c,at,gLiq,aa252,am:Math.pow(1+aa252,21/252)-1,pctCdi:fromAnnual("pct",aa252,cdi,ipca)},f);
+}
+
+function simSyncUI(){
+  setPressed("sTipo",T.tipo); setPressed("sIdx",T.idx);
+  const m=IDX[T.idx], r=$("sRateR");
+  r.min=m.min; r.max=m.max; r.step=m.step; r.value=Math.min(m.max,Math.max(m.min,T.rate[T.idx]));
+  r.style.setProperty("--p",((r.value-m.min)/(m.max-m.min)*100)+"%");
+  $("sMin").textContent=nf(m.min,m.min%1?2:0); $("sMax").textContent=nf(m.max,m.max%1?2:0);
+  $("sRateUnit").textContent = T.idx==="cdip"?"% a.a. sobre CDI": T.idx==="ipca"?"% a.a. sobre IPCA": m.unit;
+  if(document.activeElement!==$("sRate")) $("sRate").value=nf(T.rate[T.idx]);
+  $("sIni").value=T.ini; $("sFim").value=T.fim;
+  if(document.activeElement!==$("sCdi")) $("sCdi").value=nf(S.cdi);
+  if(document.activeElement!==$("sIpca")) $("sIpca").value=nf(S.ipca);
+  if(document.activeElement!==$("sValor")) $("sValor").value=T.valor.toLocaleString("pt-BR");
+  document.querySelectorAll("#sPrazos .chip").forEach(c=>c.setAttribute("aria-pressed",String(toISO(addMonths(parseISO(T.ini),+c.dataset.m))===T.fim)));
+}
+let simLast=null;
+function simRender(){
+  simSyncUI(); tSave();
+  setNotice("sNote",T.idx,"A projeção foi calculada");
+  const ini=parseISO(T.ini), fim=parseISO(T.fim), V=T.valor, cdi=S.cdi/100, ipca=S.ipca/100;
+  const R=simCalc(V,T.tipo,T.idx,T.rate[T.idx]/100,ini,fim,cdi,ipca); simLast=R&&!R.err?Object.assign(R,{ini,fim,V,cdi,ipca}):R;
+  renderHist();
+  if(R.err){ $("sWarn").hidden=false; $("sWarn").textContent=R.err; $("sTotal").textContent="—"; $("sHeroSub").textContent=""; ["tkRate","tkVal","tkPrazo","tkPrazoS","tkRateS"].forEach(k=>$(k).textContent="—");
+    ["sDU","sDC","sAM","sAA","sLiqCDI","sPer","sPerS"].forEach(k=>$(k).textContent="—"); $("sIR").textContent="—"; $("sDemo").innerHTML=""; return; }
+  $("sWarn").hidden=true;
+  const prod = T.tipo==="trib"?"CDB/LC/LF":"LCI/LCA";
+  $("sTotal").textContent=brl(V+R.liq);
+  $("sHeroSub").innerHTML=`Rendimento líquido <b>${brl(R.liq)}</b>`;
+  $("sPer").textContent=nf(R.gLiq*100)+"%";
+  $("sPerS").innerHTML=`<b>${R.du}</b> dias úteis · <b>${R.dc}</b> corridos`;
+  // ficha da aplicação
+  const isTrib=T.tipo==="trib";
+  $("tkProd").textContent = isTrib?"CDB · LC · LF":"LCI · LCA";
+  $("tkProdS").textContent = isTrib?"Tributado":"Isento de IR"; $("tkProdS").className="tk-s "+(isTrib?"trib":"isento");
+  $("tkRate").innerHTML = fmtRate(T.idx,T.rate[T.idx]/100,true);
+  $("tkRateS").textContent = T.idx==="pre" ? "Prefixado" : `Pós-fixado · ${nf(R.r*100)}% a.a. proj.`;
+  $("tkVal").textContent = brl(V);
+  const mo=Math.round(R.dc/30.4375);
+  $("tkPrazo").textContent = R.dc<60 ? R.dc+" dias" : mo<12 ? mo+" meses" : (mo%12===0 ? (mo/12)+(mo===12?" ano":" anos") : nf(mo/12,1)+" anos");
+  const sd=t=>fmtDate(t).slice(0,6)+fmtDate(t).slice(8);
+  $("tkPrazoS").textContent = `${sd(ini)} → ${sd(fim)}`;
+
+  $("sDU").textContent=R.du.toLocaleString("pt-BR"); $("sDC").textContent=R.dc.toLocaleString("pt-BR");
+  $("sIR").textContent = T.tipo==="trib"? irLbl(R.ir) : "Isento";
+  $("sAM").innerHTML=nf(R.am*100)+"%<small>a.m.</small>";
+  $("sAA").textContent=nf(R.aa252*100)+"%";
+  $("sLiqCDI").textContent=nf(R.pctCdi*100)+"% do CDI líq.";
+  const row=(l,v,cls="")=>`<tr class="${cls}"><td>${l}</td><td class="num">${v}</td></tr>`;
+  let h = row("Valor aplicado",brl(V))
+    + row("Rentabilidade contratada", T.idx==="pre"? nf(R.r*100)+"% a.a." : `${fmtRate(T.idx,T.rate[T.idx]/100)} (${nf(R.r*100)}% a.a. proj.)`)
+    + row("Rendimento bruto",brl(R.bruto));
+  if(R.iof>0) h += row(`IOF (${nf(iofRate(R.dc)*100,0)}% do rendimento)`,"− "+brl(R.iof));
+  h += row(T.tipo==="trib"?`Imposto de renda (${irLbl(R.ir)})`:"Imposto de renda", T.tipo==="trib"?"− "+brl(R.irv):"Isento")
+    + row("Rendimento líquido",brl(R.liq))
+    + row("Valor de resgate líquido",brl(V+R.liq),"total")
+    + row("Rentab. líquida no período",nf(R.gLiq*100)+"%","sub")
+    + row("% mensal (base 252, 21 dias úteis)",nf(R.am*100,3)+"%","sub")
+    + row("% anual (base 252 dias úteis)",nf(R.aa252*100)+"%","sub");
+  $("sDemo").innerHTML=h;
+  $("sDemoSub").textContent=`${prod} · de ${fmtDate(ini)} a ${fmtDate(fim)} · CDI ${nf(S.cdi)}% · IPCA ${nf(S.ipca)}% a.a.`;
+}
+
+function drawSimChart(R){
+  const svg=$("sChart"), box=$("sChartBox");
+  const W=Math.max(300,box.clientWidth), H=Math.round(Math.min(280,Math.max(210,W*0.38)));
+  const P={l:64,r:14,t:14,b:34};
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const pts=[{t:R.ini,dc:0,b:R.V,l:R.V,ir:R.tipo}];
+  const nM=Math.ceil(R.dc/30.4375);
+  for(let m=1;m<=nM;m++){ let t=addMonths(R.ini,m); if(t>R.fim) t=R.fim; const dc=Math.round((t-R.ini)/DAY); const du=R.cum[dc];
+    const f=R.at(dc,du); pts.push({t,dc,b:R.V+f.bruto,l:R.V+f.liq,ir:f.ir,iof:f.iof}); if(t===R.fim) break; }
+  if(pts[pts.length-1].t!==R.fim){ const f=R.at(R.dc,R.du); pts.push({t:R.fim,dc:R.dc,b:R.V+f.bruto,l:R.V+f.liq,ir:f.ir,iof:f.iof}); }
+  const ys=pts.flatMap(p=>[p.b,p.l]); let lo=Math.min(...ys), hi=Math.max(...ys);
+  const ticks=niceTicks(lo,hi+(hi-lo)*0.06,4); lo=ticks[0]; hi=ticks[ticks.length-1];
+  const X=d=>P.l+(d/R.dc)*(W-P.l-P.r), Y=v=>P.t+(1-(v-lo)/(hi-lo||1))*(H-P.t-P.b);
+  const kfmt=v=> Math.abs(v)>=1e6? nf(v/1e6,(ticks[1]-ticks[0])<1e5?2:1)+" mi" : nf(v/1e3,(ticks[1]-ticks[0])<1e3?1:0)+" mil";
+  let s="";
+  ticks.forEach(v=>{ s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`;
+    s+=`<text class="ax" x="${P.l-8}" y="${Y(v)+4}" text-anchor="end">${kfmt(v)}</text>`; });
+  s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${H-P.b}" y2="${H-P.b}" stroke="var(--fg-3)"/>`;
+  // rótulos x: até ~6 datas
+  const step=Math.max(1,Math.ceil((pts.length-1)/Math.max(2,Math.floor((W-P.l-P.r)/62))));
+  for(let i=0;i<pts.length;i+=step){ const p=pts[i]; const d=new Date(p.t);
+    s+=`<text class="ax" x="${X(p.dc)}" y="${H-P.b+18}" text-anchor="middle">${String(d.getUTCMonth()+1).padStart(2,"0")}/${String(d.getUTCFullYear()).slice(2)}</text>`; }
+  // área líquida
+  const line=k=>pts.map((p,i)=>(i?"L":"M")+X(p.dc).toFixed(1)+","+Y(p[k]).toFixed(1)).join("");
+  s+=`<path d="${line("l")}L${X(R.dc)},${H-P.b}L${X(0)},${H-P.b}Z" fill="var(--teal-soft)" opacity=".7"/>`;
+  s+=`<path d="${line("b")}" fill="none" stroke="var(--orange)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  s+=`<path d="${line("l")}" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linejoin="round"/>`;
+  const e=pts[pts.length-1];
+  s+=`<circle cx="${X(e.dc)}" cy="${Y(e.l)}" r="5" fill="var(--teal)" stroke="var(--surface)" stroke-width="2"/>`;
+  s+=`<g id="sHov" style="display:none"><line id="sHovL" y1="${P.t}" y2="${H-P.b}" stroke="var(--fg-2)"/>
+     <circle id="sHovA" r="4" fill="var(--teal)" stroke="var(--surface)" stroke-width="2"/><circle id="sHovB" r="4" fill="var(--orange)" stroke="var(--surface)" stroke-width="2"/></g>`;
+  s+=`<rect id="sHit" x="${P.l}" y="${P.t}" width="${W-P.l-P.r}" height="${H-P.t-P.b}" fill="transparent"/>`;
+  svg.innerHTML=s;
+  const g=svg.querySelector("#sHov"), tip=$("sTip");
+  const move=ev=>{ const rect=svg.getBoundingClientRect(), sx=W/rect.width, px=(ev.clientX-rect.left)*sx;
+    const d=(px-P.l)/(W-P.l-P.r)*R.dc; let p=pts[0]; for(const q of pts) if(Math.abs(q.dc-d)<Math.abs(p.dc-d)) p=q;
+    g.style.display=""; const L=svg.querySelector("#sHovL"); L.setAttribute("x1",X(p.dc)); L.setAttribute("x2",X(p.dc));
+    const a=svg.querySelector("#sHovA"), b=svg.querySelector("#sHovB"); a.setAttribute("cx",X(p.dc)); a.setAttribute("cy",Y(p.l)); b.setAttribute("cx",X(p.dc)); b.setAttribute("cy",Y(p.b));
+    const irTxt = T.tipo==="trib" && p.dc>0 ? ` · IR ${irLbl(p.ir)}${p.iof>0?" + IOF":""}` : "";
+    tip.innerHTML=`${fmtDate(p.t)} · ${p.dc} dias${irTxt}<br>Líquido <b>${brl(p.l)}</b><br>Bruto <b>${brl(p.b)}</b>`;
+    tip.style.display="block"; const bw=box.getBoundingClientRect().width, tw=tip.offsetWidth;
+    tip.style.left=Math.max(tw/2,Math.min(bw-tw/2,X(p.dc)/sx))+"px"; tip.style.top=(Math.min(Y(p.l),Y(p.b))/sx-10)+"px"; };
+  const hit=svg.querySelector("#sHit"); hit.addEventListener("pointermove",move); hit.addEventListener("pointerdown",move);
+  hit.addEventListener("pointerleave",()=>{ g.style.display="none"; tip.style.display="none"; });
+}
+
+/* histórico */
+function renderHist(){
+  const H=T.hist;
+  $("hEmpty").hidden=H.length>0;
+  let best=-1, bv=-Infinity; H.forEach((h,i)=>{ if(h.aa>bv){ bv=h.aa; best=i; } });
+  $("hBody").innerHTML=H.map((h,i)=>`<tr>
+    <td>${h.tipo}${i===best&&H.length>1?'<span class="best">maior líq.</span>':""}</td>
+    <td>${h.taxa}</td><td class="num">${h.venc}</td><td class="num">${h.ir}</td>
+    <td class="num">${brl(h.liq)}</td><td class="num">${nf(h.am*100,3)}%</td><td class="num">${nf(h.aa*100)}%</td><td class="num">${brl(h.total)}</td>
+    <td><button type="button" class="x" data-i="${i}" aria-label="Remover simulação">×</button></td></tr>`).join("");
+  $("hBody").querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{ T.hist.splice(+b.dataset.i,1); tSave(); renderHist(); }));
+  $("hClear").textContent="Limpar"; $("hClear").classList.remove("danger"); clearArmed=false;
+}
+let clearArmed=false;
+$("hClear").addEventListener("click",()=>{
+  if(!T.hist.length) return;
+  if(!clearArmed){ clearArmed=true; $("hClear").textContent="Confirmar limpeza"; $("hClear").classList.add("danger"); return; }
+  T.hist=[]; tSave(); renderHist();
+});
+$("sAdd").addEventListener("click",()=>{
+  const R=simLast; if(!R||R.err) return;
+  T.hist.push({tipo:T.tipo==="trib"?"CDB/LC/LF":"LCI/LCA", taxa:fmtRate(T.idx,T.rate[T.idx]/100), venc:fmtDate(R.fim), valor:R.V,
+    ir:T.tipo==="trib"?irLbl(R.ir):"Isento", liq:R.liq, am:R.am, aa:R.aa252, total:R.V+R.liq});
+  tSave(); renderHist(); flash("sCopied","Adicionada ao histórico");
+});
+function flash(id,msg){ const el=$(id); el.hidden=false; el.textContent=msg; clearTimeout(el._t); el._t=setTimeout(()=>el.hidden=true,2200); }
+function copyText(txt,id,okMsg){ const fail=()=>{ const el=$(id); el.hidden=false; el.textContent="Não foi possível copiar automaticamente."; };
+  try{ navigator.clipboard.writeText(txt).then(()=>flash(id,okMsg),fail); }catch(e){ fail(); } }
+$("hCopy").addEventListener("click",()=>{
+  if(!T.hist.length) return;
+  const head=["Tipo","Taxa contratada","Vencimento","Valor inicial","Alíquota IR","Rendimento líquido","Rent. líq. a.m.","Rent. líq. a.a.","Valor total"];
+  const rows=T.hist.map(h=>[h.tipo,h.taxa,h.venc,nf(h.valor),h.ir,nf(h.liq),nf(h.am*100,3)+"%",nf(h.aa*100)+"%",nf(h.total)].join("\t"));
+  copyText([head.join("\t"),...rows].join("\n"),"hCopied","Tabela copiada. Cole no Excel ou no WhatsApp.");
+});
+$("sCopy").addEventListener("click",()=>{
+  const R=simLast; if(!R||R.err) return;
+  const prod=T.tipo==="trib"?"CDB/LC/LF":"LCI/LCA";
+  const txt=`${prod} ${fmtRate(T.idx,T.rate[T.idx]/100)} · aplicação de ${brl(R.V)} de ${fmtDate(R.ini)} a ${fmtDate(R.fim)} (${R.du} dias úteis).\n`+
+    `Rendimento bruto ${brl(R.bruto)}${R.iof>0?`, IOF ${brl(R.iof)}`:""}, IR ${T.tipo==="trib"?brl(R.irv)+" ("+irLbl(R.ir)+")":"isento"}.\n`+
+    `Rendimento líquido ${brl(R.liq)} · resgate líquido ${brl(R.V+R.liq)} · ${nf(R.aa252*100)}% a.a. líquido (${nf(R.pctCdi*100)}% do CDI).`+
+    (T.idx!=="pre"?`\nProjeção com CDI ${nf(S.cdi)}% e IPCA ${nf(S.ipca)}% a.a.; o resultado pós-fixado pode variar.`:"");
+  copyText(txt,"sCopied","Resumo copiado");
+});
+$("sToGross").addEventListener("click",()=>{
+  S.dir = T.tipo==="trib" ? "down" : "up"; S.idx=T.idx; S.rate[T.idx]=T.rate[T.idx]; S.ini=T.ini; S.fim=T.fim; S.valor=T.valor;
+  showTab("gross"); syncAll();
+});
+
+/* bindings */
+document.querySelectorAll("#sTipo button").forEach(b=>b.addEventListener("click",()=>{ T.tipo=b.dataset.v; simRender(); }));
+document.querySelectorAll("#sIdx button").forEach(b=>b.addEventListener("click",()=>{ T.idx=b.dataset.v; simRender(); }));
+document.querySelectorAll("#sPrazos .chip").forEach(c=>c.addEventListener("click",()=>{ T.fim=toISO(addMonths(parseISO(T.ini),+c.dataset.m)); simRender(); }));
+$("sRateR").addEventListener("input",e=>{ T.rate[T.idx]=+e.target.value; $("sRate").value=nf(T.rate[T.idx]); simRender(); });
+$("sRate").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)){ T.rate[T.idx]=v; simRender(); } });
+$("sRate").addEventListener("blur",()=>{ $("sRate").value=nf(T.rate[T.idx]); });
+$("sIni").addEventListener("change",e=>{ if(e.target.value){ T.ini=e.target.value; simRender(); } });
+$("sFim").addEventListener("change",e=>{ if(e.target.value){ T.fim=e.target.value; simRender(); } });
+$("sValor").addEventListener("input",e=>{ const v=parseInt(String(e.target.value).replace(/\D/g,""),10); T.valor=isFinite(v)?v:0; simRender(); });
+$("sValor").addEventListener("blur",()=>{ $("sValor").value=T.valor.toLocaleString("pt-BR"); });
+$("sCdi").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)&&v>0){ S.cdi=v; S.manual=true; syncAll(); } });
+$("sIpca").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)){ S.ipca=v; S.manual=true; syncAll(); } });
+["sCdi","sIpca"].forEach(k=>$(k).addEventListener("blur",()=>{ $(k).value=nf(k==="sCdi"?S.cdi:S.ipca); }));
+
+/* aviso para indexadores pós-fixados */
+function setNotice(id, idx, ctx){
+  const el=$(id); if(idx==="pre"){ el.hidden=true; return; }
+  const ind = idx==="ipca" ? "IPCA" : "CDI", proj = idx==="ipca" ? S.ipca : S.cdi;
+  el.hidden=false;
+  el.innerHTML=`<span><b>Resultado projetado.</b> ${ctx} com ${ind} de ${nf(proj)}% a.a. O resultado final pode ser diferente, porque a variação do ${ind} ao longo do prazo altera o rendimento.</span>`;
+}
+
+/* =================== MÓDULO: EQUIVALÊNCIA DE TAXAS =================== */
+let E={idx:"cdip", rate:{pre:15,pct:110,cdip:1.9,ipca:7}, conv:"daily", step:1};
+try{ const ev=JSON.parse(localStorage.getItem("equivalencia.v1")||"null"); if(ev&&ev.rate) E=Object.assign(E,ev,{rate:Object.assign(E.rate,ev.rate)}); }catch(e){}
+const eSave=()=>{ try{ localStorage.setItem("equivalencia.v1",JSON.stringify(E)); }catch(e){} };
+const eTo=(idx,x,cdi,ipca)=> idx==="pct"&&E.conv==="simple" ? x*cdi : toAnnual(idx,x,cdi,ipca);
+const eFrom=(idx,r,cdi,ipca)=> idx==="pct"&&E.conv==="simple" ? r/cdi : fromAnnual(idx,r,cdi,ipca);
+const ORDER=["pre","pct","cdip","ipca"];
+let eLast=null;
+function eqRender(){
+  setPressed("eIdx",E.idx); setPressed("eConv",E.conv); setPressed("eStep",E.step);
+  const m=IDX[E.idx], r=$("eRateR");
+  r.min=m.min; r.max=m.max; r.step=m.step; r.value=Math.min(m.max,Math.max(m.min,E.rate[E.idx]));
+  r.style.setProperty("--p",((r.value-m.min)/(m.max-m.min)*100)+"%");
+  $("eMin").textContent=nf(m.min,m.min%1?2:0); $("eMax").textContent=nf(m.max,m.max%1?2:0);
+  $("eRateUnit").textContent = E.idx==="cdip"?"% a.a. sobre CDI": E.idx==="ipca"?"% a.a. sobre IPCA": m.unit;
+  if(document.activeElement!==$("eRate")) $("eRate").value=nf(E.rate[E.idx]);
+  if(document.activeElement!==$("eCdi")) $("eCdi").value=nf(S.cdi);
+  if(document.activeElement!==$("eIpca")) $("eIpca").value=nf(S.ipca);
+  eSave();
+  const cdi=S.cdi/100, ipca=S.ipca/100, x=E.rate[E.idx]/100;
+  const ra=eTo(E.idx,x,cdi,ipca);
+  const vals={}; ORDER.forEach(k=>vals[k]=eFrom(k,ra,cdi,ipca));
+  eLast={ra,vals,cdi,ipca,x};
+  const sub={pre:"taxa efetiva a.a.",pct:E.conv==="daily"?"fator diário":"taxa ÷ CDI",cdip:`com CDI de ${nf(S.cdi)}%`,ipca:`com IPCA de ${nf(S.ipca)}%`};
+  $("eTiles").innerHTML=ORDER.map(k=>`<div class="eqt${k===E.idx?" inp":""}"><div class="k">${IDX[k].short}${k===E.idx?" · informada":""}</div>
+    <div class="v">${fmtRate(k,vals[k],true)}</div><div class="s">${sub[k]}</div></div>`).join("");
+  const dep = E.idx==="ipca" ? "do IPCA e do CDI" : E.idx==="pre" ? "do CDI e do IPCA" : "do CDI e do IPCA";
+  $("eNote").innerHTML=`<span>As equivalências usam CDI de <b>${nf(S.cdi)}%</b> e IPCA de <b>${nf(S.ipca)}%</b> a.a. O resultado final pode ser diferente, porque a variação ${dep} ao longo do prazo altera o rendimento de cada indexador.</span>`;
+  // sensibilidade
+  const st=+E.step, rows=[]; for(let i=-4;i<=4;i++){ const c=S.cdi+i*st; if(c>0.25) rows.push(c); }
+  $("eHead").innerHTML=`<th>CDI a.a.</th>`+ORDER.map(k=>`<th class="${k===E.idx?"inp":""}">${IDX[k].short}</th>`).join("");
+  $("eBody").innerHTML=rows.map(c=>{ const cd=c/100, r2=eTo(E.idx,x,cd,ipca);
+    return `<tr class="${Math.abs(c-S.cdi)<1e-9?"cur":""}"><td class="num">${nf(c)}%</td>`+ORDER.map(k=>`<td class="num${k===E.idx?" inp":""}">${fmtRate(k,eFrom(k,r2,cd,ipca))}</td>`).join("")+"</tr>"; }).join("");
+  eLast.rows=rows;
+  $("eSensSub").textContent=`Equivalentes de ${fmtRate(E.idx,x)} em cenários de CDI, com IPCA fixo em ${nf(S.ipca)}% a.a. A linha destacada é a projeção atual.`;
+}
+document.querySelectorAll("#eIdx button").forEach(b=>b.addEventListener("click",()=>{
+  // ao trocar o indexador, converte a taxa atual para o novo indexador
+  if(eLast) E.rate[b.dataset.v]=+(eLast.vals[b.dataset.v]*100).toFixed(2);
+  E.idx=b.dataset.v; eqRender(); }));
+document.querySelectorAll("#eConv button").forEach(b=>b.addEventListener("click",()=>{ E.conv=b.dataset.v; eqRender(); }));
+document.querySelectorAll("#eStep button").forEach(b=>b.addEventListener("click",()=>{ E.step=b.dataset.v; eqRender(); }));
+$("eRateR").addEventListener("input",e=>{ E.rate[E.idx]=+e.target.value; $("eRate").value=nf(E.rate[E.idx]); eqRender(); });
+$("eRate").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)){ E.rate[E.idx]=v; eqRender(); } });
+$("eRate").addEventListener("blur",()=>{ $("eRate").value=nf(E.rate[E.idx]); });
+$("eCdi").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)&&v>0){ S.cdi=v; S.manual=true; syncAll(); } });
+$("eIpca").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(isFinite(v)){ S.ipca=v; S.manual=true; syncAll(); } });
+["eCdi","eIpca"].forEach(k=>$(k).addEventListener("blur",()=>{ $(k).value=nf(k==="eCdi"?S.cdi:S.ipca); }));
+$("eCopy").addEventListener("click",()=>{ if(!eLast) return;
+  const others=ORDER.filter(k=>k!==E.idx).map(k=>fmtRate(k,eLast.vals[k])).join(" | ");
+  copyText(`${fmtRate(E.idx,eLast.x)} equivale a ${others}.\nProjeções: CDI ${nf(S.cdi)}% e IPCA ${nf(S.ipca)}% a.a. O resultado final pode variar conforme a variação dos indexadores.`,"eCopied","Resumo copiado"); });
+$("eCopyT").addEventListener("click",()=>{ if(!eLast) return;
+  const head=["CDI a.a.",...ORDER.map(k=>IDX[k].short)].join("\t");
+  const lines=eLast.rows.map(c=>{ const cd=c/100, r2=eTo(E.idx,eLast.x,cd,eLast.ipca); return [nf(c)+"%",...ORDER.map(k=>fmtRate(k,eFrom(k,r2,cd,eLast.ipca)))].join("\t"); });
+  copyText([head,...lines].join("\n"),"eCopiedT","Tabela copiada. Cole no Excel ou no WhatsApp."); });
+
+/* =================== ABAS =================== */
+const TABS={gross:{h:'Gross-up isento × tributável'}, sim:{h:'Simulador de aplicação'}, eq:{h:'Equivalência de taxas'}};
+function showTab(k){
+  if(!TABS[k]) k="sim";
+  document.querySelectorAll(".tab[data-tab]").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.tab===k)));
+  $("m-gross").hidden = k!=="gross"; $("m-sim").hidden = k!=="sim"; $("m-eq").hidden = k!=="eq";
+  $("h1").innerHTML=TABS[k].h;
+}
+document.querySelectorAll(".tab[data-tab]").forEach(t=>t.addEventListener("click",()=>showTab(t.dataset.tab)));
+let startTab="sim";
+if(location.hash==="#simulador") startTab="sim"; if(location.hash==="#equivalencia") startTab="eq"; if(location.hash==="#grossup") startTab="gross";
+/* =================== INDICADORES OFICIAIS (indicadores.json) =================== */
+let IND=null;
+const mesAno = s => { if(!s) return ""; const [d,m,y]=s.split("/"); return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+m-1]+"/"+String(y).slice(2); };
+const diaMes = s => s ? s.slice(0,5) : "";
+const isoDM = s => { if(!s) return ""; const [y,m,d]=s.slice(0,10).split("-"); return d+"/"+m; };
+function renderStatus(){
+  const v=(o)=> o&&isFinite(o.valor) ? nf(o.valor)+"%" : "—";
+  $("iCdi").textContent=v(IND&&IND.cdi); $("iCdiD").textContent=IND&&IND.cdi?diaMes(IND.cdi.data):"";
+  $("iIpca").textContent=v(IND&&IND.ipca_12m); $("iIpcaD").textContent=IND&&IND.ipca_12m?mesAno(IND.ipca_12m.data):"";
+  const sel=IND&&IND.selic_focus; $("iSelic").textContent=v(sel); $("iSelicL").textContent="Selic Focus"+(sel&&sel.ano?" "+String(sel.ano).slice(2):"");
+  $("iIpcaF").textContent=v(IND&&IND.ipca_focus_12m); $("iFocusD").textContent=IND&&IND.ipca_focus_12m?isoDM(IND.ipca_focus_12m.data):"";
+  $("iMan").hidden = !(IND && S.manual);
+  $("status").title = IND ? "Fonte: Banco Central (SGS e Focus). Atualizado em "+(IND.atualizado_em||"").replace("T"," ").slice(0,16) : "Indicadores oficiais indisponíveis: usando as projeções digitadas.";
+}
+function applyInd(){
+  if(IND && !S.manual){
+    if(IND.cdi&&isFinite(IND.cdi.valor)) S.cdi=IND.cdi.valor;
+    const ip = IND.ipca_focus_12m&&isFinite(IND.ipca_focus_12m.valor) ? IND.ipca_focus_12m.valor : (IND.ipca_12m&&isFinite(IND.ipca_12m.valor)?IND.ipca_12m.valor:null);
+    if(ip!=null) S.ipca=ip;
+  }
+  syncAll();
+}
+$("iReset").addEventListener("click",()=>{ S.manual=false; applyInd(); });
+fetch("indicadores.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j){ IND=j; applyInd(); } }).catch(()=>{});
+
+(function(){ const d=new Date(), wd=["DOM","SEG","TER","QUA","QUI","SEX","SÁB"][d.getDay()];
+  $("stDate").textContent=wd+" "+d.toLocaleDateString("pt-BR"); })();
+document.addEventListener("keydown",e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey) return;
+  const tg=e.target; if(tg&&(tg.tagName==="INPUT"||tg.tagName==="TEXTAREA"||tg.isContentEditable)) return;
+  const k={"1":"sim","2":"gross","3":"eq"}[e.key]; if(k){ showTab(k); }
+});
+showTab(startTab);
+
+syncAll();
+})();
+</script>
+
+</body>
+</html>

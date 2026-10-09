@@ -1,0 +1,32 @@
+name: Atualiza indicadores (CDI, IPCA, Focus)
+
+on:
+  schedule:
+    - cron: "20 12 * * 1-5"   # 09:20 em Brasília, dias úteis
+    - cron: "20 15 * * 1-5"   # 12:20 em Brasília, reforço caso o BCB atrase
+  workflow_dispatch: {}       # botão "Run workflow" para rodar na hora
+
+permissions:
+  contents: write
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Buscar indicadores no Banco Central
+        run: python scripts/atualiza_indicadores.py
+      - name: Salvar se mudou
+        run: |
+          if git diff --quiet -- indicadores.json; then
+            echo "Sem mudanças."
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add indicadores.json
+            git commit -m "Indicadores $(TZ=America/Sao_Paulo date +%d/%m/%Y)"
+            git push
+          fi
