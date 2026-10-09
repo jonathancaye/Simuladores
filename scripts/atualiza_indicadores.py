@@ -31,9 +31,13 @@ def sgs(codigo):
 
 
 def focus(entidade, filtro, campos):
-    params = {"$top": "1", "$filter": filtro, "$orderby": "Data desc", "$format": "json", "$select": campos}
-    url = OLINDA + entidade + "?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
-    return get_json(url)["value"][0]
+    # A API Olinda exige os nomes "$top", "$filter"... sem codificar o "$"
+    params = [("$top", "1"), ("$filter", filtro), ("$orderby", "Data desc"), ("$format", "json"), ("$select", campos)]
+    qs = "&".join(k + "=" + urllib.parse.quote(v, safe=",") for k, v in params)
+    dados = get_json(OLINDA + entidade + "?" + qs)["value"]
+    if not dados:
+        raise ValueError("consulta do Focus sem resultados")
+    return dados[0]
 
 
 def main():
