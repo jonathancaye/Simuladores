@@ -42,12 +42,13 @@ def _detalhe(e):
     return f"{type(e).__name__}: {e}"
 
 
-def focus(entidade, filtro, campos, conferir):
+def focus(entidade, filtro, campos, conferir, indicador):
     """Consulta o Focus (API Olinda). Tenta a consulta filtrada; se falhar,
     baixa os registros mais recentes e filtra aqui mesmo."""
     tentativas = [
         [("$top", "1"), ("$filter", filtro), ("$orderby", "Data desc"), ("$format", "json"), ("$select", campos)],
-        [("$top", "300"), ("$orderby", "Data desc"), ("$format", "json")],
+        [("$top", "500"), ("$filter", f"Indicador eq '{indicador}'"), ("$orderby", "Data desc"), ("$format", "json")],
+        [("$top", "1000"), ("$orderby", "Data desc"), ("$format", "json")],
     ]
     falhas = []
     for params in tentativas:
@@ -86,7 +87,7 @@ def main():
                   f"Indicador eq 'Selic' and DataReferencia eq '{ano}' and baseCalculo eq 0",
                   "Indicador,Data,DataReferencia,Mediana,baseCalculo",
                   lambda d: d.get("Indicador") == "Selic" and str(d.get("DataReferencia")) == str(ano)
-                  and d.get("baseCalculo") in (0, "0") and d.get("Mediana") is not None)
+                  and d.get("baseCalculo") in (0, "0") and d.get("Mediana") is not None, "Selic")
         return {"valor": round(float(v["Mediana"]), 4), "data": v["Data"], "ano": ano, "fonte": "BCB/Focus"}
 
     def ipca_focus():
@@ -94,7 +95,7 @@ def main():
                   "Indicador eq 'IPCA' and Suavizada eq 'S' and baseCalculo eq 0",
                   "Indicador,Data,Suavizada,Mediana,baseCalculo",
                   lambda d: d.get("Indicador") == "IPCA" and d.get("Suavizada") == "S"
-                  and d.get("baseCalculo") in (0, "0") and d.get("Mediana") is not None)
+                  and d.get("baseCalculo") in (0, "0") and d.get("Mediana") is not None, "IPCA")
         return {"valor": round(float(v["Mediana"]), 4), "data": v["Data"], "fonte": "BCB/Focus"}
 
     tenta("selic_focus", selic)
