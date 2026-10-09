@@ -9,13 +9,16 @@
     "data": "01/09/2026",
     "fonte": "BCB/SGS 13522"
   },
-  "atualizado_em": "2026-10-09T14:17-03:00",
+  "atualizado_em": "2026-10-09T14:19-03:00",
   "ipca_focus_12m": {
     "valor": 4.5905,
     "data": "2026-10-02",
     "fonte": "BCB/Focus"
   },
-  "erros": [
-    "selic_focus: ValueError: HTTP 403 Forbidden <!doctype html>\n<html lang=\"en\">\n\n<head>\n\t<meta charset=\"utf-8\">\n\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\n\t<link href=\"https://www.bcb.gov.br/svr_css/bootstrap.min.css\" rel=\"stylesheet\">\n\n\t<link rel=\"stylesheet\"\n\t\thref=\"https://fonts.googleapis.com/css?family=Cormorant+ | sem resultados"
-  ]
+  "selic_focus": {
+    "valor": 13.5,
+    "data": "2026-10-02",
+    "ano": 2026,
+    "fonte": "BCB/Focus"
+  }
 }
