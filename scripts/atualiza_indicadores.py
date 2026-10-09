@@ -9,6 +9,7 @@ Se alguma consulta falhar, mantém o valor anterior do arquivo.
 """
 import json
 import pathlib
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -30,14 +31,36 @@ def sgs(codigo):
     return {"valor": round(float(str(ult["valor"]).replace(",", ".")), 4), "data": ult["data"], "fonte": f"BCB/SGS {codigo}"}
 
 
-def focus(entidade, filtro, campos):
-    # A API Olinda exige os nomes "$top", "$filter"... sem codificar o "$"
-    params = [("$top", "1"), ("$filter", filtro), ("$orderby", "Data desc"), ("$format", "json"), ("$select", campos)]
-    qs = "&".join(k + "=" + urllib.parse.quote(v, safe=",") for k, v in params)
-    dados = get_json(OLINDA + entidade + "?" + qs)["value"]
-    if not dados:
-        raise ValueError("consulta do Focus sem resultados")
-    return dados[0]
+def _detalhe(e):
+    """Mensagem de erro com o corpo da resposta HTTP, quando houver."""
+    if isinstance(e, urllib.error.HTTPError):
+        try:
+            corpo = e.read().decode("utf-8", "replace")[:300]
+        except Exception:
+            corpo = ""
+        return f"HTTP {e.code} {e.reason} {corpo}".strip()
+    return f"{type(e).__name__}: {e}"
+
+
+def focus(entidade, filtro, campos, conferir):
+    """Consulta o Focus (API Olinda). Tenta a consulta filtrada; se falhar,
+    baixa os registros mais recentes e filtra aqui mesmo."""
+    tentativas = [
+        [("$top", "1"), ("$filter", filtro), ("$orderby", "Data desc"), ("$format", "json"), ("$select", campos)],
+        [("$top", "300"), ("$orderby", "Data desc"), ("$format", "json")],
+    ]
+    falhas = []
+    for params in tentativas:
+        # A API Olinda exige os nomes "$top", "$filter"... sem codificar o "$"
+        qs = "&".join(k + "=" + urllib.parse.quote(v, safe=",") for k, v in params)
+        try:
+            dados = [d for d in get_json(OLINDA + entidade + "?" + qs)["value"] if conferir(d)]
+            if dados:
+                return dados[0]
+            falhas.append("sem resultados")
+        except Exception as e:
+            falhas.append(_detalhe(e))
+    raise ValueError(" | ".join(falhas))
 
 
 def main():
@@ -53,7 +76,7 @@ def main():
         try:
             novo[chave] = fn()
         except Exception as e:  # mantém o valor anterior
-            erros.append(f"{chave}: {e}")
+            erros.append(f"{chave}: {_detalhe(e)}")
 
     tenta("cdi", lambda: sgs(4389))
     tenta("ipca_12m", lambda: sgs(13522))
@@ -61,18 +84,27 @@ def main():
     def selic():
         v = focus("ExpectativasMercadoAnuais",
                   f"Indicador eq 'Selic' and DataReferencia eq '{ano}' and baseCalculo eq 0",
-                  "Indicador,Data,DataReferencia,Mediana,baseCalculo")
+                  "Indicador,Data,DataReferencia,Mediana,baseCalculo",
+                  lambda d: d.get("Indicador") == "Selic" and str(d.get("DataReferencia")) == str(ano)
+                  and d.get("baseCalculo") in (0, "0") and d.get("Mediana") is not None)
         return {"valor": round(float(v["Mediana"]), 4), "data": v["Data"], "ano": ano, "fonte": "BCB/Focus"}
 
     def ipca_focus():
         v = focus("ExpectativasMercadoInflacao12Meses",
                   "Indicador eq 'IPCA' and Suavizada eq 'S' and baseCalculo eq 0",
-                  "Indicador,Data,Suavizada,Mediana,baseCalculo")
+                  "Indicador,Data,Suavizada,Mediana,baseCalculo",
+                  lambda d: d.get("Indicador") == "IPCA" and d.get("Suavizada") == "S"
+                  and d.get("baseCalculo") in (0, "0") and d.get("Mediana") is not None)
         return {"valor": round(float(v["Mediana"]), 4), "data": v["Data"], "fonte": "BCB/Focus"}
 
     tenta("selic_focus", selic)
     tenta("ipca_focus_12m", ipca_focus)
 
+    # registra as falhas no próprio arquivo para facilitar o diagnóstico
+    if erros:
+        novo["erros"] = erros
+    else:
+        novo.pop("erros", None)
     if novo != atual:
         novo["atualizado_em"] = datetime.now(BRT).isoformat(timespec="minutes")
     ARQ.write_text(json.dumps(novo, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
